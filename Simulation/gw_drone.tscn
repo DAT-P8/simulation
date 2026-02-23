@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://bt2f8s6lbykd"]
+
+[ext_resource type="Script" uid="uid://dpo478gqu3ars" path="res://GWDrone.cs" id="1_n8ov2"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_kmx5g"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_n8ov2"]
+
+[node name="GWDrone" type="StaticBody3D" unique_id=665351750]
+script = ExtResource("1_n8ov2")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=641997463]
+shape = SubResource("SphereShape3D_kmx5g")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1265580145]
+mesh = SubResource("SphereMesh_n8ov2")

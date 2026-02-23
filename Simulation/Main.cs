@@ -1,5 +1,6 @@
 using Godot;
-using System;
+
+namespace Simulation;
 
 public partial class Main : Node3D
 {

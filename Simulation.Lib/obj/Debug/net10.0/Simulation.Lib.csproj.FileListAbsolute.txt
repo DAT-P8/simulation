@@ -1,0 +1,12 @@
+/home/madsbyriel/code/simulation/Simulation.Lib/bin/Debug/net10.0/Simulation.Lib.deps.json
+/home/madsbyriel/code/simulation/Simulation.Lib/bin/Debug/net10.0/Simulation.Lib.dll
+/home/madsbyriel/code/simulation/Simulation.Lib/bin/Debug/net10.0/Simulation.Lib.pdb
+/home/madsbyriel/code/simulation/Simulation.Lib/obj/Debug/net10.0/Simulation.Lib.GeneratedMSBuildEditorConfig.editorconfig
+/home/madsbyriel/code/simulation/Simulation.Lib/obj/Debug/net10.0/Simulation.Lib.AssemblyInfoInputs.cache
+/home/madsbyriel/code/simulation/Simulation.Lib/obj/Debug/net10.0/Simulation.Lib.AssemblyInfo.cs
+/home/madsbyriel/code/simulation/Simulation.Lib/obj/Debug/net10.0/Simulation.Lib.csproj.CoreCompileInputs.cache
+/home/madsbyriel/code/simulation/Simulation.Lib/obj/Debug/net10.0/Simulation.Lib.sourcelink.json
+/home/madsbyriel/code/simulation/Simulation.Lib/obj/Debug/net10.0/Simulation.Lib.dll
+/home/madsbyriel/code/simulation/Simulation.Lib/obj/Debug/net10.0/refint/Simulation.Lib.dll
+/home/madsbyriel/code/simulation/Simulation.Lib/obj/Debug/net10.0/Simulation.Lib.pdb
+/home/madsbyriel/code/simulation/Simulation.Lib/obj/Debug/net10.0/ref/Simulation.Lib.dll

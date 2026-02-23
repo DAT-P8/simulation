@@ -13,6 +13,11 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Serilog" Version="4.3.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Protobuf Include="../Protos/main.proto" />
+    <Protobuf Include="../Protos/grid_world.proto" />
+  </ItemGroup>
 </Project>

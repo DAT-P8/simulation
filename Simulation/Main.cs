@@ -1,12 +1,25 @@
 using Godot;
+using Serilog;
+using Simulation.GridEnvironment;
+using Simulation.Lib;
 
 namespace Simulation;
+
 
 public partial class Main : Node3D
 {
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+        var logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .CreateLogger();
+        Log.Logger = logger;
+
+        var gwService = new GWService(logger);
+
+        var server = new Server(logger, "localhost", 50051, gwService);
+        server.StartServer();
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.

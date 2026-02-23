@@ -8,7 +8,11 @@ namespace Simulation;
 
 public partial class Main : Node3D
 {
-	private readonly PackedScene _droneScene = GD.Load<PackedScene>("res://gw_drone.tscn");
+	public static Main Scene { get; private set; }
+
+	public Main() {
+		Scene = this;
+	}
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
@@ -18,13 +22,9 @@ public partial class Main : Node3D
 			.CreateLogger();
 		Log.Logger = logger;
 
-		var gwService = new GWService(logger);
-
-		var server = new Server(logger, "localhost", 50051, gwService);
+		var gwFactory = new GWSimulationFactory();
+		var server = new Server(logger, "localhost", 50051, gwFactory);
 		server.StartServer();
-
-		var drone = _droneScene.Instantiate<StaticBody3D>();
-		AddChild(drone);
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.

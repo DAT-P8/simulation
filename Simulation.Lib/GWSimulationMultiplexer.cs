@@ -13,7 +13,7 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
 
     public override async Task<GWActionResponse> DoStep(GWActionRequest request, ServerCallContext context)
     {
-        _logger.Information("DoStep: {Request}", request);
+        _logger.Information("DoStep: {Request}", request.Id, request);
         if (!_simulations.TryGetValue(request.Id, out var sim))
         {
             return new GWActionResponse
@@ -53,24 +53,16 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
     public override async Task<GWNewResponse> New(GWNewRequest request, ServerCallContext context)
     {
         _logger.Information("New: {Request}", request);
+        var newSim = await _simulationFactory.CreateSimulation();
+        var id = GetNewId();
+        _simulations.Add(id, newSim);
+        var state = await newSim.Reset();
 
-        try {
-            var newSim = await _simulationFactory.CreateSimulation();
-            var id = GetNewId();
-            _simulations.Add(id, newSim);
-            var state = await newSim.Reset();
-
-            return new GWNewResponse
-            {
-                Id = id,
-                State = state
-            };
-        }
-        catch (Exception e)
+        return new GWNewResponse
         {
-            _logger.Error("Got an error: {Error}", e);
-            throw;
-        }
+            Id = id,
+            State = state
+        };
     }
 
     public override async Task<GWCloseResponse> Close(GWCloseRequest request, ServerCallContext context)

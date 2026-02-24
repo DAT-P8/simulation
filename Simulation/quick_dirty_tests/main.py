@@ -1,40 +1,79 @@
-import grid_world_pb2 as proto_models
+import grid_world_pb2 as pmodels
+import time
 import random
-import grid_world_pb2_grpc as grpc_models
+import grid_world_pb2_grpc as gmodels
 import grpc
 
 def run():
+    channel = grpc.insecure_channel("localhost:50051");
+    client = Client(channel)
+    simulations = [Simulation(client) for _ in range(1)]
 
-    with grpc.insecure_channel("localhost:50051") as channel:
-        stub = grpc_models.GWSimulationStub(channel)
+    while True:
+        for sim in simulations:
+            time.sleep(.2)
+            if sim.Progress():
+                pass
 
-        while True:
-            response: proto_models.GWNewResponse = stub.New(proto_models.GWNewRequest())
-            id = response.id;
 
-            while True:
-                drone_states = response.state.drone_states
-                actions = [proto_models.GWDroneAction(id=d.id, action=rand_action()) for d in drone_states]
-                response = stub.DoStep(proto_models.GWActionRequest(id=response.id, drone_actions=actions))
+class Client:
+    def __init__(self, channel: gmodels.grpc.Channel) -> None:
+        self.stub = gmodels.GWSimulationStub(channel)
 
-                if response.state.terminated:
-                    stub.Close(proto_models.GWCloseRequest(id=id));
-                    break;
+    def Reset(self, request: pmodels.GWResetRequest) -> pmodels.GWResetResponse:
+        return self.stub.Reset(request)
+    
+    def DoStep(self, request: pmodels.GWActionRequest) -> pmodels.GWActionResponse:
+        return self.stub.DoStep(request)
+    
+    def New(self) -> pmodels.GWNewResponse:
+        return self.stub.New(pmodels.GWNewRequest())
+    
+    def Close(self, request: pmodels.GWCloseRequest) -> pmodels.GWCloseResponse:
+        return self.stub.Close(request)
 
-def rand_action() -> proto_models.GWAction:
+
+class Simulation:
+    def __init__(self, client: Client) -> None:
+        self.client = client
+        response = self.client.New();
+        self.state = response.state
+        self.id = response.id
+
+    def Progress(self) -> bool:
+        if self.state.terminated:
+            resp = self.client.Reset(pmodels.GWResetRequest(id=self.id))
+            self.state = resp.state
+
+        resp = self.client.DoStep(
+            pmodels.GWActionRequest(
+                id=self.id,
+                drone_actions=
+                    [pmodels.GWDroneAction(id=drone.id, action=rand_action()) for drone in self.state.drone_states]
+            )
+        )
+        self.state = resp.state
+
+        print("X:", self.state.drone_states[0].x, "Y:", self.state.drone_states[0].y)
+        return any([drone_state.x == 5 and drone_state.y == 5 for drone_state in self.state.drone_states])
+
+
+
+
+def rand_action() -> pmodels.GWAction:
     someRand = random.randint(1, 5);
     if someRand == 1:
-        return proto_models.GWAction.NOTHING
+        return pmodels.GWAction.NOTHING
     if someRand == 2:
-        return proto_models.GWAction.LEFT
+        return pmodels.GWAction.LEFT
     if someRand == 3:
-        return proto_models.GWAction.RIGHT
+        return pmodels.GWAction.RIGHT
     if someRand == 4:
-        return proto_models.GWAction.UP
+        return pmodels.GWAction.UP
     if someRand == 5:
-        return proto_models.GWAction.DOWN
+        return pmodels.GWAction.DOWN
 
-    return proto_models.GWAction.NOTHING
+    return pmodels.GWAction.NOTHING
 
 
 if __name__ == "__main__":

@@ -6,10 +6,8 @@ namespace Simulation.Lib;
 
 public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILogger logger) : GWSimulation.GWSimulation.GWSimulationBase
 {
-    private static long _idCounter = 1;
-    private static readonly Lock _counterLock = new();
-
     private readonly ILogger _logger = logger;
+
     private readonly Dictionary<long, IGWSimulation> _simulations = [];
     private readonly IGWSimulationFactory _simulationFactory = simulationFactory;
 
@@ -18,13 +16,15 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
         _logger.Information("DoStep: {Request}", request);
         if (!_simulations.TryGetValue(request.Id, out var sim))
         {
-            return new GWActionResponse {
+            return new GWActionResponse
+            {
                 ErrorMessage = $"The simulation with id={request.Id} doesn't exist!"
             };
         }
 
-        var newState = await sim.DoStep([.. request.Actions]);
-        return new GWActionResponse {
+        var newState = await sim.DoStep([.. request.DroneActions]);
+        return new GWActionResponse
+        {
             State = newState
         };
     }
@@ -44,9 +44,33 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
             state = await newSim.Reset();
         }
 
-        return new GWResetResponse {
+        return new GWResetResponse
+        {
             State = state
         };
+    }
+
+    public override async Task<GWNewResponse> New(GWNewRequest request, ServerCallContext context)
+    {
+        _logger.Information("New: {Request}", request);
+
+        try {
+            var newSim = await _simulationFactory.CreateSimulation();
+            var id = GetNewId();
+            _simulations.Add(id, newSim);
+            var state = await newSim.Reset();
+
+            return new GWNewResponse
+            {
+                Id = id,
+                State = state
+            };
+        }
+        catch (Exception e)
+        {
+            _logger.Error("Got an error: {Error}", e);
+            throw;
+        }
     }
 
     public override async Task<GWCloseResponse> Close(GWCloseRequest request, ServerCallContext context)
@@ -59,14 +83,16 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
 
         return new GWCloseResponse { };
     }
-    
-    private static long GetNewId()
+
+    private long GetNewId()
     {
-        lock (_counterLock)
-        {
-            _idCounter += 1;
-            return _idCounter;
-        }
+        long newId;
+        if (_simulations.Count > 0)
+            newId = _simulations.Select((d, _) => d.Key).Max() + 1;
+        else
+            newId = 1;
+
+        return newId;
     }
 }
 

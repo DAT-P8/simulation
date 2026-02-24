@@ -39,6 +39,11 @@ class GWSimulationStub(object):
                 request_serializer=grid__world__pb2.GWActionRequest.SerializeToString,
                 response_deserializer=grid__world__pb2.GWActionResponse.FromString,
                 _registered_method=True)
+        self.New = channel.unary_unary(
+                '/GWSimulation/New',
+                request_serializer=grid__world__pb2.GWNewRequest.SerializeToString,
+                response_deserializer=grid__world__pb2.GWNewResponse.FromString,
+                _registered_method=True)
         self.Reset = channel.unary_unary(
                 '/GWSimulation/Reset',
                 request_serializer=grid__world__pb2.GWResetRequest.SerializeToString,
@@ -55,19 +60,35 @@ class GWSimulationServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def DoStep(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Progress the simulation by specifying the actions to be taken by all drones.
+        The client receives the new state of the simulation
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def New(self, request, context):
+        """Start a new simulation by calling New.
+        Sender will receive an id which uniquely identifies the simulation.
+        Returns the initial state of the simulation
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def Reset(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Reset a current simulation by calling Reset.
+        This should be equivalent to calling Close and New.
+        Returns the initial state of the simulation.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def Close(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Closes a simulation and frees any resources it holds.
+        This should be called when a simulation is done.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -79,6 +100,11 @@ def add_GWSimulationServicer_to_server(servicer, server):
                     servicer.DoStep,
                     request_deserializer=grid__world__pb2.GWActionRequest.FromString,
                     response_serializer=grid__world__pb2.GWActionResponse.SerializeToString,
+            ),
+            'New': grpc.unary_unary_rpc_method_handler(
+                    servicer.New,
+                    request_deserializer=grid__world__pb2.GWNewRequest.FromString,
+                    response_serializer=grid__world__pb2.GWNewResponse.SerializeToString,
             ),
             'Reset': grpc.unary_unary_rpc_method_handler(
                     servicer.Reset,
@@ -118,6 +144,33 @@ class GWSimulation(object):
             '/GWSimulation/DoStep',
             grid__world__pb2.GWActionRequest.SerializeToString,
             grid__world__pb2.GWActionResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def New(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/GWSimulation/New',
+            grid__world__pb2.GWNewRequest.SerializeToString,
+            grid__world__pb2.GWNewResponse.FromString,
             options,
             channel_credentials,
             insecure,

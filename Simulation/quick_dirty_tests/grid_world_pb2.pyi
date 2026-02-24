@@ -23,26 +23,26 @@ UP: GWAction
 DOWN: GWAction
 
 class GWDroneState(_message.Message):
-    __slots__ = ("id", "x", "y", "destroyed")
+    __slots__ = ("id", "x", "y", "destroyed", "is_evader")
     ID_FIELD_NUMBER: _ClassVar[int]
     X_FIELD_NUMBER: _ClassVar[int]
     Y_FIELD_NUMBER: _ClassVar[int]
     DESTROYED_FIELD_NUMBER: _ClassVar[int]
+    IS_EVADER_FIELD_NUMBER: _ClassVar[int]
     id: int
     x: int
     y: int
     destroyed: bool
-    def __init__(self, id: _Optional[int] = ..., x: _Optional[int] = ..., y: _Optional[int] = ..., destroyed: bool = ...) -> None: ...
+    is_evader: bool
+    def __init__(self, id: _Optional[int] = ..., x: _Optional[int] = ..., y: _Optional[int] = ..., destroyed: bool = ..., is_evader: bool = ...) -> None: ...
 
 class GWState(_message.Message):
-    __slots__ = ("terminated", "defender_drone_states", "evader_drone_states")
+    __slots__ = ("terminated", "drone_states")
     TERMINATED_FIELD_NUMBER: _ClassVar[int]
-    DEFENDER_DRONE_STATES_FIELD_NUMBER: _ClassVar[int]
-    EVADER_DRONE_STATES_FIELD_NUMBER: _ClassVar[int]
+    DRONE_STATES_FIELD_NUMBER: _ClassVar[int]
     terminated: bool
-    defender_drone_states: _containers.RepeatedCompositeFieldContainer[GWDroneState]
-    evader_drone_states: _containers.RepeatedCompositeFieldContainer[GWDroneState]
-    def __init__(self, terminated: bool = ..., defender_drone_states: _Optional[_Iterable[_Union[GWDroneState, _Mapping]]] = ..., evader_drone_states: _Optional[_Iterable[_Union[GWDroneState, _Mapping]]] = ...) -> None: ...
+    drone_states: _containers.RepeatedCompositeFieldContainer[GWDroneState]
+    def __init__(self, terminated: bool = ..., drone_states: _Optional[_Iterable[_Union[GWDroneState, _Mapping]]] = ...) -> None: ...
 
 class GWDroneAction(_message.Message):
     __slots__ = ("id", "action")
@@ -53,12 +53,12 @@ class GWDroneAction(_message.Message):
     def __init__(self, id: _Optional[int] = ..., action: _Optional[_Union[GWAction, str]] = ...) -> None: ...
 
 class GWActionRequest(_message.Message):
-    __slots__ = ("id", "actions")
+    __slots__ = ("id", "drone_actions")
     ID_FIELD_NUMBER: _ClassVar[int]
-    ACTIONS_FIELD_NUMBER: _ClassVar[int]
+    DRONE_ACTIONS_FIELD_NUMBER: _ClassVar[int]
     id: int
-    actions: _containers.RepeatedCompositeFieldContainer[GWDroneAction]
-    def __init__(self, id: _Optional[int] = ..., actions: _Optional[_Iterable[_Union[GWDroneAction, _Mapping]]] = ...) -> None: ...
+    drone_actions: _containers.RepeatedCompositeFieldContainer[GWDroneAction]
+    def __init__(self, id: _Optional[int] = ..., drone_actions: _Optional[_Iterable[_Union[GWDroneAction, _Mapping]]] = ...) -> None: ...
 
 class GWActionResponse(_message.Message):
     __slots__ = ("state", "error_message")
@@ -89,3 +89,15 @@ class GWCloseRequest(_message.Message):
 class GWCloseResponse(_message.Message):
     __slots__ = ()
     def __init__(self) -> None: ...
+
+class GWNewRequest(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class GWNewResponse(_message.Message):
+    __slots__ = ("id", "state")
+    ID_FIELD_NUMBER: _ClassVar[int]
+    STATE_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    state: GWState
+    def __init__(self, id: _Optional[int] = ..., state: _Optional[_Union[GWState, _Mapping]] = ...) -> None: ...

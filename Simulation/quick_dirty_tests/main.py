@@ -1,36 +1,41 @@
 import grid_world_pb2 as proto_models
+import random
 import grid_world_pb2_grpc as grpc_models
 import grpc
-
-class IdCounter:
-    id = 0
-
-    @staticmethod
-    def NewId() -> int:
-        IdCounter.id += 1
-        return IdCounter.id
 
 def run():
 
     with grpc.insecure_channel("localhost:50051") as channel:
         stub = grpc_models.GWSimulationStub(channel)
 
-        id = IdCounter.NewId()
-        response: proto_models.GWResetResponse = stub.Reset(proto_models.GWResetRequest(id=id))
-        print(f"Received: {response}")
+        while True:
+            response: proto_models.GWNewResponse = stub.New(proto_models.GWNewRequest())
+            id = response.id;
 
-        defender_states = response.state.defender_drone_states
-        evader_states = response.state.evader_drone_states
-        terminated = response.state.terminated
+            while True:
+                drone_states = response.state.drone_states
+                actions = [proto_models.GWDroneAction(id=d.id, action=rand_action()) for d in drone_states]
+                response = stub.DoStep(proto_models.GWActionRequest(id=response.id, drone_actions=actions))
 
-        if (terminated):
-            return
+                if response.state.terminated:
+                    stub.Close(proto_models.GWCloseRequest(id=id));
+                    break;
 
-        defender_actions = [proto_models.GWDroneAction(id=d.id, action=proto_models.GWAction.LEFT) for d in defender_states]
-        evader_actions = [proto_models.GWDroneAction(id=d.id, action=proto_models.GWAction.LEFT) for d in evader_states]
-        actions = defender_actions + evader_actions
+def rand_action() -> proto_models.GWAction:
+    someRand = random.randint(1, 5);
+    if someRand == 1:
+        return proto_models.GWAction.NOTHING
+    if someRand == 2:
+        return proto_models.GWAction.LEFT
+    if someRand == 3:
+        return proto_models.GWAction.RIGHT
+    if someRand == 4:
+        return proto_models.GWAction.UP
+    if someRand == 5:
+        return proto_models.GWAction.DOWN
 
-        response = stub.DoStep(proto_models.GWActionRequest(id=id, actions=actions))
+    return proto_models.GWAction.NOTHING
+
 
 if __name__ == "__main__":
     run()

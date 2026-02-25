@@ -100,8 +100,10 @@ public class GWSim(ILogger logger) : IGWSimulation
             .Where(d1 =>
                 _drones.Any(d2 =>
                     d1.Value.Id != d2.Value.Id &&
-                    d1.Value.X == d2.Value.X
-                    && d1.Value.Z == d2.Value.Z
+                    d1.Value.X == d2.Value.X && 
+                    d1.Value.Z == d2.Value.Z &&
+                    !d1.Value.Destroyed &&
+                    !d2.Value.Destroyed
                 ))
             .Select(e => e.Value);
 

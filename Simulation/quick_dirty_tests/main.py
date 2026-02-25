@@ -7,11 +7,10 @@ import grpc
 def run():
     channel = grpc.insecure_channel("localhost:50051");
     client = Client(channel)
-    simulations = [Simulation(client) for _ in range(1)]
+    simulations = [Simulation(client) for _ in range(10)]
 
     while True:
         for sim in simulations:
-            time.sleep(.2)
             if sim.Progress():
                 pass
 

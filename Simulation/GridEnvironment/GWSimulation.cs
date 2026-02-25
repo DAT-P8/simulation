@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Godot;
 using GWSimulation;
@@ -20,7 +19,7 @@ public class GWSim(ILogger logger) : IGWSimulation
     private readonly PackedScene _droneEvaderScene = GD.Load<PackedScene>("res://gw_drone_evader.tscn");
     private readonly ILogger _logger = logger;
     private readonly Dictionary<long, GWDrone> _drones = [];
-    private readonly Lock _droneLock = new();
+    private readonly object _droneLock = new();
 
     private bool _isTerminated = false;
 

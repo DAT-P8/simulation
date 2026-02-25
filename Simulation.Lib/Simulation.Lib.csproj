@@ -16,6 +16,10 @@
     <PackageReference Include="Serilog" Version="4.3.1" />
   </ItemGroup>
 
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <PackageReference Include="Contrib.Grpc.Core.M1" Version="2.46.7" />
+  </ItemGroup>
+
   <ItemGroup>
     <Protobuf Include="../Protos/main.proto" />
     <Protobuf Include="../Protos/grid_world.proto" />

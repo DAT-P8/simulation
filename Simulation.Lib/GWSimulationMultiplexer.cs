@@ -10,7 +10,7 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
 
     private readonly Dictionary<long, IGWSimulation> _simulations = [];
     private readonly IGWSimulationFactory _simulationFactory = simulationFactory;
-    private readonly SemaphoreSlim _simSemaphore = new(1);
+    private readonly SemaphoreSlim _simulationSemaphore = new(1);
 
     public override async Task<GWActionResponse> DoStep(GWActionRequest request, ServerCallContext context)
     {
@@ -56,7 +56,7 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
         var newSim = await _simulationFactory.CreateSimulation();
 
         long id;
-        await _simSemaphore.WaitAsync();
+        await _simulationSemaphore.WaitAsync();
         try
         {
             id = GetNewId();
@@ -64,7 +64,7 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
         }
         finally
         {
-            _simSemaphore.Release();
+            _simulationSemaphore.Release();
         }
 
         var state = await newSim.Reset();
@@ -82,7 +82,7 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
         {
             await sim.Close();
 
-            await _simSemaphore.WaitAsync();
+            await _simulationSemaphore.WaitAsync();
 
             try
             {
@@ -90,7 +90,7 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
             }
             finally
             {
-                _simSemaphore.Release();
+                _simulationSemaphore.Release();
             }
         }
 

@@ -10,6 +10,7 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
 
     private readonly Dictionary<long, IGWSimulation> _simulations = [];
     private readonly IGWSimulationFactory _simulationFactory = simulationFactory;
+    private readonly SemaphoreSlim _simulationSemaphore = new(1);
 
     public override async Task<GWActionResponse> DoStep(GWActionRequest request, ServerCallContext context)
     {
@@ -39,9 +40,8 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
         }
         else
         {
-            var newSim = await _simulationFactory.CreateSimulation();
-            _simulations.Add(GetNewId(), newSim);
-            state = await newSim.Reset();
+            _logger.Error("Attempt to reset a non-existing simulation {Id}", request.Id);
+            throw new Exception($"Cannot reset non-existing simulation {request.Id}");
         }
 
         return new GWResetResponse
@@ -54,10 +54,20 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
     {
         _logger.Information("New: {Request}", request);
         var newSim = await _simulationFactory.CreateSimulation();
-        var id = GetNewId();
-        _simulations.Add(id, newSim);
-        var state = await newSim.Reset();
 
+        long id;
+        await _simulationSemaphore.WaitAsync();
+        try
+        {
+            id = GetNewId();
+            _simulations.Add(id, newSim);
+        }
+        finally
+        {
+            _simulationSemaphore.Release();
+        }
+
+        var state = await newSim.Reset();
         return new GWNewResponse
         {
             Id = id,
@@ -71,6 +81,17 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
         if (_simulations.TryGetValue(request.Id, out var sim))
         {
             await sim.Close();
+
+            await _simulationSemaphore.WaitAsync();
+
+            try
+            {
+                _simulations.Remove(request.Id);
+            }
+            finally
+            {
+                _simulationSemaphore.Release();
+            }
         }
 
         return new GWCloseResponse { };

@@ -1,46 +1,72 @@
-# How to run
+# How to Run
 
-To run this project, start by initializing and updating git submodules by
+## 1. Initialize Git Submodules
+
+Before building the project, make sure all Git submodules are initialized and updated:
 
 ```bash
 git submodule init
 git submodule update
 ```
 
-To run the project, it is important to first build the .NET projects:
+## 2. Build the .NET Projects
+
+The .NET projects must be built before running the simulation:
 
 ```bash
 dotnet build
 ```
 
-After the projects have been build, change directory into Simulation and run godot from there:
+## 3. Run the Simulation
+
+After a successful build, navigate to the `Simulation` directory and launch Godot:
 
 ```bash
 cd Simulation
 godot-mono
 ```
 
-> [!IMPORTANT] Godot binary:
-> Note that your godot binary may be called something else entirely, 
-> please be aware of where you have installed godot. Also, you must install the Godot version that has C# support.
+> [!IMPORTANT]
+> **Godot Binary**
+>
+> - Your Godot executable may have a different name depending on your installation.
+> - Ensure that Godot is installed and available in your system PATH.
+> - You must use the version of Godot that includes **C# (Mono/.NET) support**.
 
+---
 
 # Simulation
 
-This is a 3-part executable Godot project consisting of
+This is a three-part executable Godot project consisting of:
 
-- Simulation.Lib, 
-- Protos and 
-- Simulation
+- `Simulation.Lib`
+- `Protos`
+- `Simulation`
 
 ## Simulation.Lib
 
-Consists mainly of interfaces and high-level abstractions. The Simulation.Lib library concerns itself with how to execute simulations and defining the interface of a simulation, however it does NOT concern itself with the implementation of a simulation, this is the responsibility of the Simulation executable.
+`Simulation.Lib` contains interfaces and high-level abstractions related to running simulations.
+
+It defines:
+- How simulations are executed
+- The core simulation interfaces
+
+It does **not** implement simulation logic. Concrete implementations are handled by the `Simulation` executable project.
 
 ## Protos
 
-A git submodule used for defining types across languages. It is used for ensuring typesafe remote procedure calls, and is the backbone of the communication between our PyADRL library and the simulation environment.
+`Protos` is a Git submodule used for defining shared types across multiple languages.
+
+It is responsible for:
+- Enabling type-safe remote procedure calls (RPC)
+- Providing a shared contract between components
+- Serving as the communication backbone between the PyADRL library and the simulation environment
 
 ## Simulation
 
-This is the last part of this three-part project, the executable C# project. This is a godot project and is used for the visualization of simulations done when learning.
+`Simulation` is the executable C# Godot project.
+
+It is responsible for:
+- Implementing the simulation logic
+- Visualizing simulations during training and learning
+- Acting as the runtime entry point of the system

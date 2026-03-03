@@ -17,12 +17,14 @@ public class Server(
 
     public void StartServer()
     {
-        var gwService = new GWSimulationMultiplexer(_gwSimulationFactory, _logger);
+        var gwService = new GWSimulationMultiplexer(_gwSimulationFactory);
+        var loggingDecorator = new GWLoggingDecorator(gwService, _logger);
+        var errorDecorator = new GWErrorDecorator(loggingDecorator, _logger);
 
         var server = new Grpc.Core.Server
         {
             Services = {
-                GWSimulation.GWSimulation.BindService(gwService)
+                GWSimulation.GWSimulation.BindService(errorDecorator)
             },
             Ports = { new ServerPort(_host, _port, ServerCredentials.Insecure) }
         };

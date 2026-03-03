@@ -4,18 +4,43 @@ using Serilog;
 
 namespace Simulation.Lib;
 
-public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILogger logger) : GWSimulation.GWSimulation.GWSimulationBase
+public class GWSimulationMultiplexer : GWSimulation.GWSimulation.GWSimulationBase, IDisposable
 {
-    private readonly ILogger _logger = logger;
-
-    private readonly Dictionary<long, IGWSimulation> _simulations = [];
-    private readonly IGWSimulationFactory _simulationFactory = simulationFactory;
+    private readonly Dictionary<long, (IGWSimulation, DateTime)> _simulations = [];
+    private readonly ILogger _logger;
+    private readonly IGWSimulationFactory _simulationFactory;
     private readonly SemaphoreSlim _simulationSemaphore = new(1);
+    private readonly Timer _timer;
+
+    public GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILogger logger)
+    {
+        _logger = logger;
+        _simulationFactory = simulationFactory;
+        _timer = new Timer(CheckCleanup, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+    }
+
+    private void CheckCleanup(object? state)
+    {
+        var threshold = DateTime.UtcNow - TimeSpan.FromMinutes(1);
+
+        _simulationSemaphore.Wait();
+        try {
+            var toClean = _simulations.Where(e => e.Value.Item2 < threshold).ToList();
+            foreach (var (key, (sim, _)) in toClean)
+            {
+                _logger.Warning("Cleaned up simulation {Id} due to being idle for too long!", key);
+                sim.Close();
+                _simulations.Remove(key);
+            }
+        }
+        finally {
+            _simulationSemaphore.Release();
+        }
+    }
 
     public override async Task<GWActionResponse> DoStep(GWActionRequest request, ServerCallContext context)
     {
-        _logger.Information("DoStep: {Request}", request.Id, request);
-        if (!_simulations.TryGetValue(request.Id, out var sim))
+        if (!_simulations.TryGetValue(request.Id, out (IGWSimulation, DateTime) simDate))
         {
             return new GWActionResponse
             {
@@ -23,7 +48,11 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
             };
         }
 
+        _simulations[request.Id] = (simDate.Item1, DateTime.UtcNow);
+
+        var (sim, _) = simDate;
         var newState = await sim.DoStep([.. request.DroneActions]);
+
         return new GWActionResponse
         {
             State = newState
@@ -32,17 +61,15 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
 
     public override async Task<GWResetResponse> Reset(GWResetRequest request, ServerCallContext context)
     {
-        _logger.Information("Reset: {Request}", request);
-        GWState state;
-        if (_simulations.TryGetValue(request.Id, out var simulation))
+        if (!_simulations.TryGetValue(request.Id, out (IGWSimulation, DateTime) simDate))
         {
-            state = await simulation.Reset();
-        }
-        else
-        {
-            _logger.Error("Attempt to reset a non-existing simulation {Id}", request.Id);
             throw new Exception($"Cannot reset non-existing simulation {request.Id}");
         }
+
+        _simulations[request.Id] = (simDate.Item1, DateTime.UtcNow);
+
+        var (sim, _) = simDate;
+        var state = await sim.Reset();
 
         return new GWResetResponse
         {
@@ -52,7 +79,6 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
 
     public override async Task<GWNewResponse> New(GWNewRequest request, ServerCallContext context)
     {
-        _logger.Information("New: {Request}", request);
         var newSim = await _simulationFactory.CreateSimulation();
 
         long id;
@@ -60,7 +86,7 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
         try
         {
             id = GetNewId();
-            _simulations.Add(id, newSim);
+            _simulations.Add(id, (newSim, DateTime.UtcNow));
         }
         finally
         {
@@ -77,11 +103,11 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
 
     public override async Task<GWCloseResponse> Close(GWCloseRequest request, ServerCallContext context)
     {
-        _logger.Information("Close: {Request}", request);
-        if (_simulations.TryGetValue(request.Id, out var sim))
+        if (_simulations.TryGetValue(request.Id, out var simDate))
         {
-            await sim.Close();
+            var (sim, _) = simDate;
 
+            await sim.Close();
             await _simulationSemaphore.WaitAsync();
 
             try
@@ -106,6 +132,12 @@ public class GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILo
             newId = 1;
 
         return newId;
+    }
+
+    public void Dispose()
+    {
+        _timer.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
 

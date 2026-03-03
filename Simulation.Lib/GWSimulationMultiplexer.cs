@@ -6,7 +6,7 @@ namespace Simulation.Lib;
 
 public class GWSimulationMultiplexer : GWSimulation.GWSimulation.GWSimulationBase, IDisposable
 {
-    private readonly Dictionary<long, (IGWSimulation, DateTime)> _simulations = [];
+    private readonly Dictionary<long, SimulationDatetime> _simulations = [];
     private readonly ILogger _logger;
     private readonly IGWSimulationFactory _simulationFactory;
     private readonly SemaphoreSlim _simulationSemaphore = new(1);
@@ -24,8 +24,9 @@ public class GWSimulationMultiplexer : GWSimulation.GWSimulation.GWSimulationBas
         var threshold = DateTime.UtcNow - TimeSpan.FromMinutes(1);
 
         _simulationSemaphore.Wait();
-        try {
-            var toClean = _simulations.Where(e => e.Value.Item2 < threshold).ToList();
+        try
+        {
+            var toClean = _simulations.Where(e => e.Value.DateTime < threshold).ToList();
             foreach (var (key, (sim, _)) in toClean)
             {
                 _logger.Warning("Cleaned up simulation {Id} due to being idle for too long!", key);
@@ -33,22 +34,22 @@ public class GWSimulationMultiplexer : GWSimulation.GWSimulation.GWSimulationBas
                 _simulations.Remove(key);
             }
         }
-        finally {
+        finally
+        {
             _simulationSemaphore.Release();
         }
     }
 
     public override async Task<GWActionResponse> DoStep(GWActionRequest request, ServerCallContext context)
     {
-        if (!_simulations.TryGetValue(request.Id, out (IGWSimulation, DateTime) simDate))
+        if (!_simulations.TryGetValue(request.Id, out var simDate))
         {
             return new GWActionResponse
             {
                 ErrorMessage = $"The simulation with id={request.Id} doesn't exist!"
             };
         }
-
-        _simulations[request.Id] = (simDate.Item1, DateTime.UtcNow);
+        simDate.DateTime = DateTime.UtcNow;
 
         var (sim, _) = simDate;
         var newState = await sim.DoStep([.. request.DroneActions]);
@@ -61,12 +62,11 @@ public class GWSimulationMultiplexer : GWSimulation.GWSimulation.GWSimulationBas
 
     public override async Task<GWResetResponse> Reset(GWResetRequest request, ServerCallContext context)
     {
-        if (!_simulations.TryGetValue(request.Id, out (IGWSimulation, DateTime) simDate))
+        if (!_simulations.TryGetValue(request.Id, out var simDate))
         {
             throw new Exception($"Cannot reset non-existing simulation {request.Id}");
         }
-
-        _simulations[request.Id] = (simDate.Item1, DateTime.UtcNow);
+        simDate.DateTime = DateTime.UtcNow;
 
         var (sim, _) = simDate;
         var state = await sim.Reset();
@@ -86,7 +86,7 @@ public class GWSimulationMultiplexer : GWSimulation.GWSimulation.GWSimulationBas
         try
         {
             id = GetNewId();
-            _simulations.Add(id, (newSim, DateTime.UtcNow));
+            _simulations.Add(id, new SimulationDatetime(newSim, DateTime.UtcNow));
         }
         finally
         {
@@ -121,6 +121,11 @@ public class GWSimulationMultiplexer : GWSimulation.GWSimulation.GWSimulationBas
         }
 
         return new GWCloseResponse { };
+    }
+
+    private record SimulationDatetime(IGWSimulation Simulation, DateTime DateTime)
+    {
+        public DateTime DateTime = DateTime;
     }
 
     private long GetNewId()

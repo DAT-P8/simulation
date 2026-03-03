@@ -17,7 +17,7 @@ public class Server(
 
     public void StartServer()
     {
-        var gwService = new GWSimulationMultiplexer(_gwSimulationFactory);
+        var gwService = new GWSimulationMultiplexer(_gwSimulationFactory, _logger);
         var loggingDecorator = new GWLoggingDecorator(gwService, _logger);
         var errorDecorator = new GWErrorDecorator(loggingDecorator, _logger);
 

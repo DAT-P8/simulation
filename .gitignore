@@ -1,0 +1,6 @@
+# Godot 4+ specific ignores
+Simulation/.godot/
+Simulation/android/
+
+# ignore nix generated files
+.direnv/

@@ -11,10 +11,10 @@ from TDF_pb2 import (
     TDFResetRequest,
     TDFResetResponse
 )
-import grpc
+from grpc import Channel
 
 class Client:
-    def __init__(self, channel: grpc.Channel) -> None:
+    def __init__(self, channel: Channel) -> None:
         self.client = gmodels.TDFSimulationStub(channel)
 
     def DoStep(self, id: int, actions: Iterable[TDFDroneAction]) -> TDFDoStepResponse:
@@ -42,5 +42,4 @@ class Simulation:
         self.drones = [d for d in response.state.drone_states]
 
     def Progress(self):
-
         pass

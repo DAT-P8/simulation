@@ -1,5 +1,6 @@
 using Grpc.Core;
 using Serilog;
+using Simulation.Lib.GW;
 
 namespace Simulation.Lib;
 
@@ -17,7 +18,7 @@ public class Server(
 
     public void StartServer()
     {
-        var gwService = new GWSimulationMultiplexer(_gwSimulationFactory, _logger);
+        var gwService = new GWSimulationServer(_gwSimulationFactory, _logger);
         var loggingDecorator = new GWLoggingDecorator(gwService, _logger);
         var errorDecorator = new GWErrorDecorator(loggingDecorator, _logger);
 

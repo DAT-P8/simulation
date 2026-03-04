@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using Serilog;
-using Simulation.Lib;
+using Simulation.Lib.GW;
 
 namespace Simulation.GridEnvironment;
 

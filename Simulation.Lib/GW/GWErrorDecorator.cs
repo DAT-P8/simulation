@@ -1,7 +1,7 @@
 using GWSimulation;
 using Serilog;
 
-namespace Simulation.Lib;
+namespace Simulation.Lib.GW;
 
 public class GWErrorDecorator(
     GWSimulation.GWSimulation.GWSimulationBase inner,

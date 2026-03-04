@@ -6,6 +6,7 @@ using Godot;
 using GWSimulation;
 using Serilog;
 using Simulation.Lib;
+using Simulation.Lib.GW;
 
 namespace Simulation.GridEnvironment;
 

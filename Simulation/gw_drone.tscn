@@ -1,17 +1,24 @@
-[gd_scene format=3 uid="uid://bt2f8s6lbykd"]
+[gd_scene format=3 uid="uid://bdsbcnisaje6p"]
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_kmx5g"]
+[ext_resource type="Texture2D" uid="uid://bt4mteggiptni" path="res://Textures/drone.png" id="1_n8ov2"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kmx5g"]
-albedo_color = Color(0, 1, 0, 1)
+[sub_resource type="SphereShape3D" id="SphereShape3D_gcrgn"]
 
-[sub_resource type="SphereMesh" id="SphereMesh_n8ov2"]
-material = SubResource("StandardMaterial3D_kmx5g")
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l205u"]
+transparency = 2
+alpha_scissor_threshold = 0.5
+alpha_antialiasing_mode = 0
+albedo_texture = ExtResource("1_n8ov2")
+texture_filter = 0
+
+[sub_resource type="QuadMesh" id="QuadMesh_qbulx"]
+material = SubResource("StandardMaterial3D_l205u")
+orientation = 1
 
 [node name="GWDrone" type="StaticBody3D" unique_id=665351750]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=641997463]
-shape = SubResource("SphereShape3D_kmx5g")
+shape = SubResource("SphereShape3D_gcrgn")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1265580145]
-mesh = SubResource("SphereMesh_n8ov2")
+mesh = SubResource("QuadMesh_qbulx")

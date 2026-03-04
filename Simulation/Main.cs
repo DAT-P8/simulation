@@ -22,6 +22,11 @@ public partial class Main : Node3D
 			.CreateLogger();
 		Log.Logger = logger;
 
+        var world = new GWMap(10);
+        var view = world.GenerateTexture();
+        AddChild(view);
+        AddChild(world.ConstructMap(view));
+
 		var gwFactory = new GWSimulationFactory();
 		var server = new Server(logger, "localhost", 50051, gwFactory);
 		server.StartServer();

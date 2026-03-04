@@ -140,15 +140,3 @@ public class GWSimulationServer : GWSimulation.GWSimulation.GWSimulationBase, ID
         GC.SuppressFinalize(this);
     }
 }
-
-public interface IGWSimulationFactory
-{
-    Task<IGWSimulation> CreateSimulation();
-}
-
-public interface IGWSimulation
-{
-    Task<GWState> Reset();
-    Task Close();
-    Task<GWState> DoStep(List<GWDroneAction> actions);
-}

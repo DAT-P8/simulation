@@ -2,6 +2,7 @@ using Godot;
 using Serilog;
 using Simulation.GridEnvironment;
 using Simulation.Lib;
+using Simulation.TDF;
 
 namespace Simulation;
 
@@ -24,7 +25,9 @@ public partial class Main : Node3D
         Log.Logger = logger;
 
         var gwFactory = new GWSimulationFactory();
-        var server = new Server(logger, "localhost", 50051, gwFactory);
+        var tdfFactory = new TDFSimulationFactory();
+
+        var server = new Server(logger, "localhost", 50051, gwFactory, tdfFactory);
         server.StartServer();
     }
 

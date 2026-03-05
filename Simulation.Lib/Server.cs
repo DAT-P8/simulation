@@ -22,16 +22,18 @@ public class Server(
     public void StartServer()
     {
         var gwService = new GWSimulationServer(_gwSimulationFactory, _logger);
-        var loggingDecorator = new GWLoggingDecorator(gwService, _logger);
-        var errorDecorator = new GWErrorDecorator(loggingDecorator, _logger);
+        var gwLoggingDecorator = new GWLoggingDecorator(gwService, _logger);
+        var gwErrorDecorator = new GWErrorDecorator(gwLoggingDecorator, _logger);
 
         var tdfService = new TDFSimulationServer(_tdfSimulationFactory, _logger);
+        var tdfLoggingDecorator = new TDFLoggingDecorator(tdfService, _logger);
+        var tdfErrorDecorator = new TDFErrorDecorator(tdfLoggingDecorator, _logger);
 
         var server = new Grpc.Core.Server
         {
             Services = {
-                GWSimulation.GWSimulation.BindService(errorDecorator),
-                TDFSimulation.TDFSimulation.BindService(tdfService)
+                GWSimulation.GWSimulation.BindService(gwErrorDecorator),
+                TDFSimulation.TDFSimulation.BindService(tdfErrorDecorator)
             },
             Ports = { new ServerPort(_host, _port, ServerCredentials.Insecure) }
         };

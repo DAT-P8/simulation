@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Cache;
 using System.Threading.Tasks;
 using Godot;
 using Serilog;
@@ -39,6 +40,18 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
 
     public Task<TDFState> DoStep(List<TDFDroneAction> actions)
     {
+        var allDrones = _attackers.Concat(_defenders);
+        foreach (var action in actions)
+        {
+            var drone = allDrones.First(e => e.Id == action.Id);
+            if (drone is null) continue;
+
+            drone.SetForce(new Vector3D<float>(action.XF, action.YF, action.ZF));
+        }
+
+        foreach (var drone in allDrones)
+            drone.AdvanceTime(1);
+
         return Task.FromResult(GetState());
     }
 

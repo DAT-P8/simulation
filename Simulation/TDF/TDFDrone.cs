@@ -75,19 +75,23 @@ public class TDFDrone(StaticBody3D body, long id, bool isEvader) : IDisposable
 
     /**
      * <summary>
-     * Advances the physics of this drone by some time step.
+     * Advances the physics of this drone by some time step. This sets the new position of the drone.
      * </summary>
      */
     public void AdvanceTime(float step)
     {
+        // TODO: Scale this variable by some means maybe? What is the MAX acceleration? Max speed? Linear interpolation? Some other?
         var new_velocity = _velocity.Add(_force.Scale(step));
-        var new_position = 1/2 * step * step;
+        var new_position = _velocity.Scale(step).Add(_force.Scale(1/2 * step * step));
+
+        SetVelocity(new_velocity);
+        SetPosition(new_position);
     }
 
     /*
        a = const
        v = integral a = v0 + x * a
-       p = integral v = v0 + 1/2 * x^2 * a
+       p = integral v = v0 * x + 1/2 * x^2 * a
        */
 
     public TDFDroneState GetState()

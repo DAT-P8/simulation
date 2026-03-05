@@ -6,7 +6,7 @@
 script = ExtResource("1_ig7tw")
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=646955031]
-transform = Transform3D(-1, 8.742278e-08, 3.821371e-15, 0, -4.371139e-08, 1, 8.742278e-08, 1, 4.371139e-08, 0, 30, 0)
+transform = Transform3D(-1, 8.742278e-08, 3.821371e-15, 0, -4.371139e-08, 1, 8.742278e-08, 1, 4.371139e-08, 0, 200, 0)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=437186593]
 transform = Transform3D(0.70989156, -0.6402501, -0.2934859, 0.65312016, 0.44245917, 0.61454386, -0.26360622, -0.62794095, 0.7322582, 0, 10, 0)

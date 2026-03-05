@@ -1,4 +1,5 @@
-from typing import Iterable
+from typing import Any, Iterable
+import random
 import TDF_pb2_grpc as gmodels
 from TDF_pb2 import (
     TDFCloseRequest,
@@ -41,9 +42,25 @@ class Simulation:
 
         self.id = response.state.sim_id
         self.drones = [d for d in response.state.drone_states]
+        self.terminated = response.state.terminated
+
+    def __set_state__(self, some: Any):
+        self.id = some.state.sim_id
+        self.drones = [d for d in some.state.drone_states]
+        self.terminated = some.state.terminated
+
+    def get_random_action(self, id: int) -> TDFDroneAction:
+        return TDFDroneAction(id=id, x_f=random.random() - .5, y_f=random.random() -.5, z_f=random.random() - .5)
+
 
     def Progress(self):
-        pass
+        if self.terminated:
+            response = self.client.Reset(self.id)
+            self.__set_state__(response)
+
+        self.__set_state__(self.client.DoStep(self.id, [self.get_random_action(d.id) for d in self.drones]))
+
+        return self.terminated
 
 
 def main():

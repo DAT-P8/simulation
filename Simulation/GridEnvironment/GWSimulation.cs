@@ -90,7 +90,7 @@ public class GWSim(ILogger logger) : IGWSimulation
         _isTerminated = _drones.Any(e => e.Value.X == 5 && e.Value.Z == 5 && e.Value.IsEvader);
         if (_isTerminated)
             return Task.FromResult(GetState());
-        
+
         // All evaders are out of bounds
         _isTerminated = _drones.All(e => !e.Value.IsEvader || !IsInBounds(e.Value.X, e.Value.Z));
         if (_isTerminated)
@@ -100,7 +100,7 @@ public class GWSim(ILogger logger) : IGWSimulation
             .Where(d1 =>
                 _drones.Any(d2 =>
                     d1.Value.Id != d2.Value.Id &&
-                    d1.Value.X == d2.Value.X && 
+                    d1.Value.X == d2.Value.X &&
                     d1.Value.Z == d2.Value.Z &&
                     !d1.Value.Destroyed &&
                     !d2.Value.Destroyed
@@ -155,9 +155,9 @@ public class GWSim(ILogger logger) : IGWSimulation
 
     private record Positions
     {
-        public GWPosition Defender1;
-        public GWPosition Defender2;
-        public GWPosition Evader;
+        public required GWPosition Defender1;
+        public required GWPosition Defender2;
+        public required GWPosition Evader;
     }
 
     private static Positions GetInitialPositions()

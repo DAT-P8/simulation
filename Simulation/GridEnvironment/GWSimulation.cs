@@ -105,7 +105,8 @@ public class GWSim(ILogger logger) : IGWSimulation
                     !d1.Value.Destroyed &&
                     !d2.Value.Destroyed
                 ))
-            .Select(e => e.Value);
+            .Select(e => e.Value)
+            .ToList();
 
         foreach (var drone in colliding_drones)
             drone.Destroyed = true;

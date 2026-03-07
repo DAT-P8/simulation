@@ -8,13 +8,6 @@ namespace Simulation;
 
 public partial class Main : Node3D
 {
-    public static Main Scene { get; private set; } = null!;
-
-    public Main()
-    {
-        Scene = this;
-    }
-
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {

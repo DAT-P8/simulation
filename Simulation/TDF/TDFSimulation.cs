@@ -104,10 +104,6 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
         var attackerPositions = RandomPositionsOnDomeAboveGround(attackers.Count, _attackerDomeRadius);
         var defenderPositions = RandomPositionsOnDomeAboveGround(defenders.Count, _defenderDomeRadius);
 
-        // TODO: Remove this once we know it to not be fucked
-        if (attackerPositions.Count != attackers.Count) throw new Exception("Didn't generate enought positions!");
-        if (defenders.Count != defenderPositions.Count) throw new Exception("Didn't generate enought positions!");
-
         foreach (var (drone, position) in attackers.Zip(attackerPositions).Concat(defenders.Zip(defenderPositions)))
             drone.SetPosition(position);
 

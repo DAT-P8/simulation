@@ -11,7 +11,7 @@ using TDFSimulation;
 
 namespace Simulation.TDF;
 
-public class TDFSimulation(long id, int evaders, int pursuers, float attackerDomeRadius, float defenderDomeRadius, int seed) : ITDFSimulation
+public class TDFSimulation(long id, int evaders, int pursuers, float attackerDomeRadius, float defenderDomeRadius, float arenaDomeRadius, float maxDroneSpeed, int seed) : ITDFSimulation
 {
     private readonly PackedScene _droneScene = GD.Load<PackedScene>("res://gw_drone.tscn");
     private readonly PackedScene _droneEvaderScene = GD.Load<PackedScene>("res://gw_drone_evader.tscn");
@@ -22,6 +22,8 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
     private readonly int _pursuerCount = pursuers;
     private readonly float _attackerDomeRadius = attackerDomeRadius;
     private readonly float _defenderDomeRadius = defenderDomeRadius;
+    private readonly float _arenaDomeRadius = arenaDomeRadius;
+    private readonly float _maxDroneSpeed = maxDroneSpeed;
     private readonly Random _random = new(seed);
 
     private readonly List<TDFDrone> _defenders = [];
@@ -92,9 +94,9 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
         List<TDFDrone> attackers = new(_evaderCount);
 
         for (var i = 0; i < _pursuerCount; i++)
-            defenders.Add(new TDFDrone(_droneScene.Instantiate<StaticBody3D>(), i, false));
+            defenders.Add(new TDFDrone(_droneScene.Instantiate<StaticBody3D>(), i, false, _maxDroneSpeed));
         for (var i = _pursuerCount; i < _pursuerCount + _evaderCount; i++)
-            attackers.Add(new TDFDrone(_droneEvaderScene.Instantiate<StaticBody3D>(), i, true));
+            attackers.Add(new TDFDrone(_droneEvaderScene.Instantiate<StaticBody3D>(), i, true, _maxDroneSpeed));
 
         foreach (var d in defenders.Concat(attackers))
         {

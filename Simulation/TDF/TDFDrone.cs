@@ -7,6 +7,8 @@ namespace Simulation.TDF;
 
 public class TDFDrone(StaticBody3D body, long id, bool isEvader) : IDisposable
 {
+    private const float MAX_SPEED = 100;
+
     private readonly bool _isEvader = isEvader;
     private readonly StaticBody3D _body = body;
     private readonly long _id = id;
@@ -61,7 +63,7 @@ public class TDFDrone(StaticBody3D body, long id, bool isEvader) : IDisposable
     {
         _velocity.SetVector3D(velocity);
     }
-    
+
     /**
      * <summary>
      * Set a constant force to this drone, changing velocity linearly
@@ -80,12 +82,27 @@ public class TDFDrone(StaticBody3D body, long id, bool isEvader) : IDisposable
      */
     public void AdvanceTime(float step)
     {
-        // TODO: Scale this variable by some means maybe? What is the MAX acceleration? Max speed? Linear interpolation? Some other?
-        var new_velocity = _velocity.Add(_force.Scale(step));
-        var new_position = _velocity.Scale(step).Add(_force.Scale(1/2 * step * step));
+        var newVelocity = _velocity.Add(_force.Scale(step));
 
-        SetVelocity(new_velocity);
-        SetPosition(new_position);
+        // If the new velocity exceeds the max speed, then scale it to max speed.
+        if (newVelocity.Dot(newVelocity) > MAX_SPEED * MAX_SPEED)
+            newVelocity = newVelocity.Normalize().Scale(MAX_SPEED);
+
+        var newPosition = _velocity.Scale(step).Add(_force.Scale(1 / 2 * step * step));
+
+        // Check if the travelled distance exceeds the maximum allowed.
+        var deltaPos = newPosition.Sub(_position);
+        var travelledSquare = deltaPos.Dot(deltaPos);
+        var maxSquare = MAX_SPEED * step * MAX_SPEED * step;
+        if (travelledSquare > maxSquare)
+        {
+            var newTravelled = deltaPos.Normalize().Scale(MAX_SPEED * step);
+            newPosition = _position.Add(newTravelled);
+        }
+
+
+        SetVelocity(newVelocity);
+        SetPosition(newPosition);
     }
 
     /*

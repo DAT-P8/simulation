@@ -81,6 +81,26 @@ public static class VectorExtensions
 
     /**
      * <summary>
+     * Subtract a vector from this vector, returning a new vector.
+     * </summary>
+     */
+    public static Vector3D<float> Sub(this Vector3D<float> v1, Vector3D<float> v2)
+    {
+        return new Vector3D<float>(v1.X - v2.X, v1.Y - v2.Y, v1.Z - v2.Z);
+    }
+
+    /**
+     * <summary>
+     * Subtract a vector from this vector, returning a new vector.
+     * </summary>
+     */
+    public static Vector3D<double> Sub(this Vector3D<double> v1, Vector3D<double> v2)
+    {
+        return new Vector3D<double>(v1.X - v2.X, v1.Y - v2.Y, v1.Z - v2.Z);
+    }
+
+    /**
+     * <summary>
      * Normalizes a vector to a vector of length 1.
      * </summary>
      */

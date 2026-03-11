@@ -35,7 +35,8 @@ public class GWDrone(StaticBody3D staticBody3D, long id, bool isEvader)
 
     public GWDroneState GetState()
     {
-        return new GWDroneState {
+        return new GWDroneState
+        {
             Id = _id,
             X = _x,
             Y = _z,

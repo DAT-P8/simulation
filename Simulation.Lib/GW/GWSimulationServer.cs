@@ -2,9 +2,9 @@ using Grpc.Core;
 using GWSimulation;
 using Serilog;
 
-namespace Simulation.Lib;
+namespace Simulation.Lib.GW;
 
-public class GWSimulationMultiplexer : GWSimulation.GWSimulation.GWSimulationBase, IDisposable
+public class GWSimulationServer : GWSimulation.GWSimulation.GWSimulationBase, IDisposable
 {
     private readonly Dictionary<long, SimulationDatetime> _simulations = [];
     private readonly ILogger _logger;
@@ -12,7 +12,7 @@ public class GWSimulationMultiplexer : GWSimulation.GWSimulation.GWSimulationBas
     private readonly SemaphoreSlim _simulationSemaphore = new(1);
     private readonly Timer _timer;
 
-    public GWSimulationMultiplexer(IGWSimulationFactory simulationFactory, ILogger logger)
+    public GWSimulationServer(IGWSimulationFactory simulationFactory, ILogger logger)
     {
         _logger = logger;
         _simulationFactory = simulationFactory;
@@ -139,16 +139,4 @@ public class GWSimulationMultiplexer : GWSimulation.GWSimulation.GWSimulationBas
         _timer.Dispose();
         GC.SuppressFinalize(this);
     }
-}
-
-public interface IGWSimulationFactory
-{
-    Task<IGWSimulation> CreateSimulation();
-}
-
-public interface IGWSimulation
-{
-    Task<GWState> Reset();
-    Task Close();
-    Task<GWState> DoStep(List<GWDroneAction> actions);
 }

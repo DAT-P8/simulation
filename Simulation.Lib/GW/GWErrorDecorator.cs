@@ -1,7 +1,7 @@
 using GWSimulation;
 using Serilog;
 
-namespace Simulation.Lib;
+namespace Simulation.Lib.GW;
 
 public class GWErrorDecorator(
     GWSimulation.GWSimulation.GWSimulationBase inner,
@@ -19,7 +19,7 @@ public class GWErrorDecorator(
         }
         catch (Exception e)
         {
-            _logger.Error("Error calling Close with {Request}: {Error}", request, e);
+            _logger.Error("GW: Error calling Close with {Request}: {Error}", request, e);
             throw;
         }
     }
@@ -32,7 +32,7 @@ public class GWErrorDecorator(
         }
         catch (Exception e)
         {
-            _logger.Error("Error calling DoStep with {Request}: {Error}", request, e);
+            _logger.Error("GW: Error calling DoStep with {Request}: {Error}", request, e);
             throw;
         }
     }
@@ -45,7 +45,7 @@ public class GWErrorDecorator(
         }
         catch (Exception e)
         {
-            _logger.Error("Error calling New with {Request}: {Error}", request, e);
+            _logger.Error("GW: Error calling New with {Request}: {Error}", request, e);
             throw;
         }
     }
@@ -58,7 +58,7 @@ public class GWErrorDecorator(
         }
         catch (Exception e)
         {
-            _logger.Error("Error calling Reset with {Request}: {Error}", request, e);
+            _logger.Error("GW: Error calling Reset with {Request}: {Error}", request, e);
             throw;
         }
     }

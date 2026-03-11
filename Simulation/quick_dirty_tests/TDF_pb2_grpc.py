@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-import grid_world_pb2 as grid__world__pb2
+import TDF_pb2 as TDF__pb2
 
 GRPC_GENERATED_VERSION = '1.78.0'
 GRPC_VERSION = grpc.__version__
@@ -18,14 +18,14 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in grid_world_pb2_grpc.py depends on'
+        + ' but the generated code in TDF_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
     )
 
 
-class GWSimulationStub(object):
+class TDFSimulationStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -35,96 +35,86 @@ class GWSimulationStub(object):
             channel: A grpc.Channel.
         """
         self.DoStep = channel.unary_unary(
-                '/GWSimulation/DoStep',
-                request_serializer=grid__world__pb2.GWActionRequest.SerializeToString,
-                response_deserializer=grid__world__pb2.GWActionResponse.FromString,
+                '/TDFSimulation/DoStep',
+                request_serializer=TDF__pb2.TDFDoStepRequest.SerializeToString,
+                response_deserializer=TDF__pb2.TDFDoStepResponse.FromString,
                 _registered_method=True)
         self.New = channel.unary_unary(
-                '/GWSimulation/New',
-                request_serializer=grid__world__pb2.GWNewRequest.SerializeToString,
-                response_deserializer=grid__world__pb2.GWNewResponse.FromString,
+                '/TDFSimulation/New',
+                request_serializer=TDF__pb2.TDFNewRequest.SerializeToString,
+                response_deserializer=TDF__pb2.TDFNewResponse.FromString,
                 _registered_method=True)
         self.Reset = channel.unary_unary(
-                '/GWSimulation/Reset',
-                request_serializer=grid__world__pb2.GWResetRequest.SerializeToString,
-                response_deserializer=grid__world__pb2.GWResetResponse.FromString,
+                '/TDFSimulation/Reset',
+                request_serializer=TDF__pb2.TDFResetRequest.SerializeToString,
+                response_deserializer=TDF__pb2.TDFResetResponse.FromString,
                 _registered_method=True)
         self.Close = channel.unary_unary(
-                '/GWSimulation/Close',
-                request_serializer=grid__world__pb2.GWCloseRequest.SerializeToString,
-                response_deserializer=grid__world__pb2.GWCloseResponse.FromString,
+                '/TDFSimulation/Close',
+                request_serializer=TDF__pb2.TDFCloseRequest.SerializeToString,
+                response_deserializer=TDF__pb2.TDFCloseResponse.FromString,
                 _registered_method=True)
 
 
-class GWSimulationServicer(object):
+class TDFSimulationServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def DoStep(self, request, context):
-        """Progress the simulation by specifying the actions to be taken by all drones.
-        The client receives the new state of the simulation
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def New(self, request, context):
-        """Start a new simulation by calling New.
-        Sender will receive an id which uniquely identifies the simulation.
-        Returns the initial state of the simulation
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def Reset(self, request, context):
-        """Reset a current simulation by calling Reset.
-        This should be equivalent to calling Close and New.
-        Returns the initial state of the simulation.
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def Close(self, request, context):
-        """Closes a simulation and frees any resources it holds.
-        This should be called when a simulation is done.
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
 
-def add_GWSimulationServicer_to_server(servicer, server):
+def add_TDFSimulationServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'DoStep': grpc.unary_unary_rpc_method_handler(
                     servicer.DoStep,
-                    request_deserializer=grid__world__pb2.GWActionRequest.FromString,
-                    response_serializer=grid__world__pb2.GWActionResponse.SerializeToString,
+                    request_deserializer=TDF__pb2.TDFDoStepRequest.FromString,
+                    response_serializer=TDF__pb2.TDFDoStepResponse.SerializeToString,
             ),
             'New': grpc.unary_unary_rpc_method_handler(
                     servicer.New,
-                    request_deserializer=grid__world__pb2.GWNewRequest.FromString,
-                    response_serializer=grid__world__pb2.GWNewResponse.SerializeToString,
+                    request_deserializer=TDF__pb2.TDFNewRequest.FromString,
+                    response_serializer=TDF__pb2.TDFNewResponse.SerializeToString,
             ),
             'Reset': grpc.unary_unary_rpc_method_handler(
                     servicer.Reset,
-                    request_deserializer=grid__world__pb2.GWResetRequest.FromString,
-                    response_serializer=grid__world__pb2.GWResetResponse.SerializeToString,
+                    request_deserializer=TDF__pb2.TDFResetRequest.FromString,
+                    response_serializer=TDF__pb2.TDFResetResponse.SerializeToString,
             ),
             'Close': grpc.unary_unary_rpc_method_handler(
                     servicer.Close,
-                    request_deserializer=grid__world__pb2.GWCloseRequest.FromString,
-                    response_serializer=grid__world__pb2.GWCloseResponse.SerializeToString,
+                    request_deserializer=TDF__pb2.TDFCloseRequest.FromString,
+                    response_serializer=TDF__pb2.TDFCloseResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'GWSimulation', rpc_method_handlers)
+            'TDFSimulation', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('GWSimulation', rpc_method_handlers)
+    server.add_registered_method_handlers('TDFSimulation', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class GWSimulation(object):
+class TDFSimulation(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -141,9 +131,9 @@ class GWSimulation(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/GWSimulation/DoStep',
-            grid__world__pb2.GWActionRequest.SerializeToString,
-            grid__world__pb2.GWActionResponse.FromString,
+            '/TDFSimulation/DoStep',
+            TDF__pb2.TDFDoStepRequest.SerializeToString,
+            TDF__pb2.TDFDoStepResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -168,9 +158,9 @@ class GWSimulation(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/GWSimulation/New',
-            grid__world__pb2.GWNewRequest.SerializeToString,
-            grid__world__pb2.GWNewResponse.FromString,
+            '/TDFSimulation/New',
+            TDF__pb2.TDFNewRequest.SerializeToString,
+            TDF__pb2.TDFNewResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -195,9 +185,9 @@ class GWSimulation(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/GWSimulation/Reset',
-            grid__world__pb2.GWResetRequest.SerializeToString,
-            grid__world__pb2.GWResetResponse.FromString,
+            '/TDFSimulation/Reset',
+            TDF__pb2.TDFResetRequest.SerializeToString,
+            TDF__pb2.TDFResetResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -222,9 +212,9 @@ class GWSimulation(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/GWSimulation/Close',
-            grid__world__pb2.GWCloseRequest.SerializeToString,
-            grid__world__pb2.GWCloseResponse.FromString,
+            '/TDFSimulation/Close',
+            TDF__pb2.TDFCloseRequest.SerializeToString,
+            TDF__pb2.TDFCloseResponse.FromString,
             options,
             channel_credentials,
             insecure,

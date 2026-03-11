@@ -104,12 +104,6 @@ public class TDFDrone(StaticBody3D body, long id, bool isEvader, float maxSpeed)
         SetPosition(newPosition);
     }
 
-    /*
-       a = const
-       v = integral a = v0 + x * a
-       p = integral v = v0 * x + 1/2 * x^2 * a
-       */
-
     public TDFDroneState GetState()
     {
         return new TDFDroneState

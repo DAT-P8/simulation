@@ -5,10 +5,9 @@ using TDFSimulation;
 
 namespace Simulation.TDF;
 
-public class TDFDrone(StaticBody3D body, long id, bool isEvader) : IDisposable
+public class TDFDrone(StaticBody3D body, long id, bool isEvader, float maxSpeed) : IDisposable
 {
-    private const float MAX_SPEED = 100;
-
+    private readonly float _maxSpeed = maxSpeed;
     private readonly bool _isEvader = isEvader;
     private readonly StaticBody3D _body = body;
     private readonly long _id = id;
@@ -85,18 +84,18 @@ public class TDFDrone(StaticBody3D body, long id, bool isEvader) : IDisposable
         var newVelocity = _velocity.Add(_force.Scale(step));
 
         // If the new velocity exceeds the max speed, then scale it to max speed.
-        if (newVelocity.Dot(newVelocity) > MAX_SPEED * MAX_SPEED)
-            newVelocity = newVelocity.Normalize().Scale(MAX_SPEED);
+        if (newVelocity.Dot(newVelocity) > _maxSpeed * _maxSpeed)
+            newVelocity = newVelocity.Normalize().Scale(_maxSpeed);
 
         var newPosition = _velocity.Scale(step).Add(_force.Scale(1 / 2 * step * step));
 
         // Check if the travelled distance exceeds the maximum allowed.
         var deltaPos = newPosition.Sub(_position);
         var travelledSquare = deltaPos.Dot(deltaPos);
-        var maxSquare = MAX_SPEED * step * MAX_SPEED * step;
+        var maxSquare = _maxSpeed * step * _maxSpeed * step;
         if (travelledSquare > maxSquare)
         {
-            var newTravelled = deltaPos.Normalize().Scale(MAX_SPEED * step);
+            var newTravelled = deltaPos.Normalize().Scale(_maxSpeed * step);
             newPosition = _position.Add(newTravelled);
         }
 

@@ -177,4 +177,15 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
             DroneStates = { _defenders.Concat(_attackers).Select(e => e.GetState()).ToList() },
         };
     }
+
+    private static void SweepTests(List<(Vector3D<float>, long)> before, List<(Vector3D<float>, long)>after)
+    {
+        // Sweep Tests in short:
+        // See location of before and after and intepret this as constant motion
+        // If two drones paths intersect, we will need to test if their motions overlap
+        // This is done by subtracting the motion of one drone from another s.t. the one drone can be seen as stationary
+        // With one drone as stationary, we can simply use a ray to test if the non-stationary drone will overlap with the stationary.
+        // If overlap => they do collide
+        // If non-overlap => they do not collide
+    }
 }

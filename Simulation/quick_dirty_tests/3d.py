@@ -33,6 +33,7 @@ class Client:
 
 class Simulation:
     def __init__(self, client: Client) -> None:
+        self.scale = .001
         self.client = client
         response = self.client.New()
         if response.WhichOneof("error_case") == "error_msg":
@@ -50,7 +51,7 @@ class Simulation:
         self.terminated = some.state.terminated
 
     def get_random_action(self, id: int) -> TDFDroneAction:
-        return TDFDroneAction(id=id, x_f=random.random() - .5, y_f=random.random() -.5, z_f=random.random() - .5)
+        return TDFDroneAction(id=id, x_f=(random.random() - .5) * self.scale, y_f=(random.random() - .5) * self.scale, z_f=(random.random() - .5) * self.scale)
 
 
     def Progress(self):

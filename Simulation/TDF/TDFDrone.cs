@@ -61,7 +61,7 @@ public class TDFDrone(StaticBody3D body, long id, bool isEvader) : IDisposable
     {
         _velocity.SetVector3D(velocity);
     }
-    
+
     /**
      * <summary>
      * Set a constant force to this drone, changing velocity linearly
@@ -82,7 +82,7 @@ public class TDFDrone(StaticBody3D body, long id, bool isEvader) : IDisposable
     {
         // TODO: Scale this variable by some means maybe? What is the MAX acceleration? Max speed? Linear interpolation? Some other?
         var new_velocity = _velocity.Add(_force.Scale(step));
-        var new_position = _velocity.Scale(step).Add(_force.Scale(1/2 * step * step));
+        var new_position = _position.Add(_velocity.Scale(step).Add(_force.Scale(1 / 2 * step * step)));
 
         SetVelocity(new_velocity);
         SetPosition(new_position);

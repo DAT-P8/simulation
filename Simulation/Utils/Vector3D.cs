@@ -18,7 +18,7 @@ public class Vector3D<T>(T x, T y, T z)
         _y = y;
         _z = z;
     }
-    
+
     public void SetVector3D(Vector3D<T> v)
     {
         _x = v.X;
@@ -38,7 +38,7 @@ public static class VectorExtensions
     {
         return v1.X * v2.X + v1.Y * v2.Y + v1.Z * v2.Z;
     }
-    
+
     /**
      * <summary>
      * Computes the dot product of two vectors.
@@ -89,7 +89,7 @@ public static class VectorExtensions
         var magnitude = Math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);
         return new Vector3D<float>((float)(v.X / magnitude), (float)(v.Y / magnitude), (float)(v.Z / magnitude));
     }
-    
+
     /**
      * <summary>
      * Normalizes a vector to a vector of length 1.
@@ -121,7 +121,7 @@ public static class VectorExtensions
             Math.Abs(v1.Y - v2.Y) < epsilon &&
             Math.Abs(v1.Z - v2.Z) < epsilon;
     }
-    
+
     /**
      * <summary>
      * Provides a comparison between vectors but with a small acceptable difference.

@@ -178,7 +178,7 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
         };
     }
 
-    private static void SweepTests(List<(Vector3D<float>, long)> before, List<(Vector3D<float>, long)>after)
+    private static void SweepTests(List<(Vector3D<float>, long)> before, List<(Vector3D<float>, long)> after)
     {
         // Sweep Tests in short:
         // See location of before and after and intepret this as constant motion
@@ -187,5 +187,50 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
         // With one drone as stationary, we can simply use a ray to test if the non-stationary drone will overlap with the stationary.
         // If overlap => they do collide
         // If non-overlap => they do not collide
+
+        // Project to X axis and check only overlaps
+        var orderedPairs = before.Zip(after).Select((e, i) =>
+                e.First.Item1.X < e.Second.Item1.X ?
+                    (e.First.Item1.X, e.Second.Item1.X) :
+                    (e.Second.Item1.X, e.First.Item1.X)
+            ).ToList();
+
+        List<HashSet<int>> overlapIndeces = [];
+
+        for (int i = 0; i < orderedPairs.Count; i++)
+        {
+            HashSet<int> set = [i];
+            var p1 = orderedPairs[i];
+            for (int j = i + 1; j < orderedPairs.Count; j++)
+            {
+                var p2 = orderedPairs[j];
+                if (
+                    (p1.Item1 <= p2.Item1 && p2.Item1 <= p1.Item2) ||
+                    (p1.Item1 <= p2.Item2 && p2.Item2 <= p1.Item2) ||
+
+                    (p2.Item1 <= p1.Item1 && p1.Item1 <= p2.Item2) ||
+                    (p2.Item1 <= p1.Item2 && p1.Item2 <= p2.Item2)
+                )
+                {
+                    set.Add(j);
+                }
+            }
+
+            // Add only unique sets
+            var wasFound = false;
+            foreach (var s in overlapIndeces)
+            {
+                wasFound = wasFound || s.SetEquals(set);
+                if (wasFound) break;
+            }
+
+            if (!wasFound)
+                overlapIndeces.Add(set);
+        }
+
+        // Remove any subsets thay may be found.
+        var overlaps = overlapIndeces.Where(s1 => overlapIndeces.All(s2 => !s1.IsProperSubsetOf(s2))).ToList();
+
+        // Now that all overlaps in 1D have been found, we need to check if they actually did collide.
     }
 }

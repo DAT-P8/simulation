@@ -10,7 +10,8 @@ public class TDFErrorDecorator(TDFSimulation.TDFSimulation.TDFSimulationBase inn
 
     public override Task<TDFCloseResponse> Close(TDFCloseRequest request, Grpc.Core.ServerCallContext context)
     {
-        try {
+        try
+        {
             return _inner.Close(request, context);
         }
         catch (Exception e)
@@ -22,7 +23,8 @@ public class TDFErrorDecorator(TDFSimulation.TDFSimulation.TDFSimulationBase inn
 
     public override Task<TDFDoStepResponse> DoStep(TDFDoStepRequest request, Grpc.Core.ServerCallContext context)
     {
-        try {
+        try
+        {
             return _inner.DoStep(request, context);
         }
         catch (Exception e)
@@ -34,7 +36,8 @@ public class TDFErrorDecorator(TDFSimulation.TDFSimulation.TDFSimulationBase inn
 
     public override Task<TDFNewResponse> New(TDFNewRequest request, Grpc.Core.ServerCallContext context)
     {
-        try {
+        try
+        {
             return _inner.New(request, context);
         }
         catch (Exception e)
@@ -46,7 +49,8 @@ public class TDFErrorDecorator(TDFSimulation.TDFSimulation.TDFSimulationBase inn
 
     public override Task<TDFResetResponse> Reset(TDFResetRequest request, Grpc.Core.ServerCallContext context)
     {
-        try {
+        try
+        {
             return _inner.Reset(request, context);
         }
         catch (Exception e)

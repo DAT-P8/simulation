@@ -1,6 +1,45 @@
 # How to Run
 
-## 1. Initialize Git Submodules
+## Nix
+
+If you have [Nix](https://nixos.org/download/) installed, the development environment is fully reproducible with no manual dependency setup.
+
+### 1. Enter the Development Shell
+
+```bash
+nix develop
+```
+
+Alternatively automate this by installing direnv and allow it
+
+```bash
+direnv allow
+```
+
+This will automatically:
+- Make `dotnet`, `godot-mono`, `protobuf`, and `grpc` available
+- Initialize and update all Git submodules
+- Print next steps as a reminder
+
+### 2. Build the .NET Projects
+
+```bash
+dotnet build
+```
+
+### 3. Run the Simulation
+
+```bash
+run-simulation
+```
+
+The `run-simulation` command is provided by the Nix shell. It navigates to the `Simulation` directory and launches Godot automatically.
+
+---
+
+## Manual setup
+
+### 1. Initialize Git Submodules
 
 Before building the project, make sure all Git submodules are initialized and updated:
 
@@ -9,7 +48,7 @@ git submodule init
 git submodule update
 ```
 
-## 2. Build the .NET Projects
+### 2. Build the .NET Projects
 
 The .NET projects must be built before running the simulation:
 
@@ -17,7 +56,7 @@ The .NET projects must be built before running the simulation:
 dotnet build
 ```
 
-## 3. Run the Simulation
+### 3. Run the Simulation
 
 After a successful build, navigate to the `Simulation` directory and launch Godot:
 

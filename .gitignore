@@ -4,3 +4,6 @@ Simulation/android/
 
 # ignore nix generated files
 .direnv/
+
+# ignore mac .DS_Store
+.DS_Store

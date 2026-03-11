@@ -26,6 +26,10 @@ public partial class Main : Node3D
 
         var gwFactory = new GWSimulationFactory();
         var tdfFactory = new TDFSimulationFactory();
+        var world = new GWMap(10);
+        var view = world.GenerateTexture();
+        AddChild(view);
+        AddChild(world.ConstructMap(view));
 
         var server = new Server(logger, "localhost", 50051, gwFactory, tdfFactory);
         server.StartServer();

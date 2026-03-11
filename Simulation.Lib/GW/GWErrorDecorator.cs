@@ -13,7 +13,8 @@ public class GWErrorDecorator(
 
     public override Task<GWCloseResponse> Close(GWCloseRequest request, Grpc.Core.ServerCallContext context)
     {
-        try {
+        try
+        {
             return _inner.Close(request, context);
         }
         catch (Exception e)
@@ -25,7 +26,8 @@ public class GWErrorDecorator(
 
     public override Task<GWActionResponse> DoStep(GWActionRequest request, Grpc.Core.ServerCallContext context)
     {
-        try {
+        try
+        {
             return _inner.DoStep(request, context);
         }
         catch (Exception e)
@@ -37,7 +39,8 @@ public class GWErrorDecorator(
 
     public override Task<GWNewResponse> New(GWNewRequest request, Grpc.Core.ServerCallContext context)
     {
-        try {
+        try
+        {
             return _inner.New(request, context);
         }
         catch (Exception e)
@@ -49,7 +52,8 @@ public class GWErrorDecorator(
 
     public override Task<GWResetResponse> Reset(GWResetRequest request, Grpc.Core.ServerCallContext context)
     {
-        try {
+        try
+        {
             return _inner.Reset(request, context);
         }
         catch (Exception e)

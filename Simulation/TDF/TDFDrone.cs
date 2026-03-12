@@ -87,7 +87,7 @@ public class TDFDrone(StaticBody3D body, long id, bool isEvader, float maxSpeed)
         if (newVelocity.Dot(newVelocity) > _maxSpeed * _maxSpeed)
             newVelocity = newVelocity.Normalize().Scale(_maxSpeed);
 
-        var newPosition = _velocity.Scale(step).Add(_force.Scale(1 / 2 * step * step));
+        var newPosition = _position.Add(_velocity.Scale(step).Add(_force.Scale(1 / 2 * step * step)));
 
         // Check if the travelled distance exceeds the maximum allowed.
         var deltaPos = newPosition.Sub(_position);

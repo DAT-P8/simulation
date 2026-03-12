@@ -99,7 +99,7 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
             attackers.Add(new TDFDrone(_droneEvaderScene.Instantiate<StaticBody3D>(), i, true, _maxDroneSpeed));
 
         foreach (var d in defenders.Concat(attackers))
-            d.Body.CallDeferred(Node.MethodName.AddChild, d.Body);
+            Main.MainScene.CallDeferred(Node.MethodName.AddChild, d.Body);
 
         var attackerPositions = RandomPositionsOnDomeAboveGround(attackers.Count, _attackerDomeRadius);
         var defenderPositions = RandomPositionsOnDomeAboveGround(defenders.Count, _defenderDomeRadius);

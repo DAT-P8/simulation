@@ -24,6 +24,7 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
     private readonly float _defenderDomeRadius = defenderDomeRadius;
     private readonly float _arenaDomeRadius = arenaDomeRadius;
     private readonly float _maxDroneSpeed = maxDroneSpeed;
+    private const float COLLISSION_RANGE = 1;
     private readonly Random _random = new(seed);
 
     private readonly List<TDFDrone> _defenders = [];
@@ -42,7 +43,7 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
 
     public Task<TDFState> DoStep(List<TDFDroneAction> actions)
     {
-        var allDrones = _attackers.Concat(_defenders);
+        var allDrones = _attackers.Concat(_defenders).ToList();
         foreach (var action in actions)
         {
             var drone = allDrones.First(e => e.Id == action.Id);
@@ -51,8 +52,20 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
             drone.SetForce(new Vector3D<float>(action.XF, action.YF, action.ZF));
         }
 
+        var positionsBefore = allDrones.Select(e => (e.GetPosition(), e.Id)).ToList();
         foreach (var drone in allDrones)
             drone.AdvanceTime(1);
+        var positionsAfter = allDrones.Select(e => (e.GetPosition(), e.Id)).ToList();
+
+        var pointCalculations = SweepTests(positionsBefore, positionsAfter);
+
+        foreach (var (point, d1id, d2id) in pointCalculations)
+        {
+            if (point.Dot(point) <= COLLISSION_RANGE * COLLISSION_RANGE)
+            {
+
+            }
+        }
 
         return Task.FromResult(GetState());
     }
@@ -178,7 +191,7 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
         };
     }
 
-    private static void SweepTests(List<(Vector3D<float>, long)> before, List<(Vector3D<float>, long)> after)
+    private static List<(Vector3D<float>, long, long)> SweepTests(List<(Vector3D<float>, long)> before, List<(Vector3D<float>, long)> after)
     {
         // Sweep Tests in short:
         // See location of before and after and intepret this as constant motion
@@ -232,5 +245,56 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
         var overlaps = overlapIndeces.Where(s1 => overlapIndeces.All(s2 => !s1.IsProperSubsetOf(s2))).ToList();
 
         // Now that all overlaps in 1D have been found, we need to check if they actually did collide.
+        // Start by construct the pairs to check
+        List<(int, int)> overlapPairs = [];
+        foreach (var overlap in overlaps)
+        {
+            for (int i = 0; i < overlap.Count; i++)
+            {
+                for (int j = i + 1; j < overlap.Count; j++)
+                {
+                    overlapPairs.Add((i, j));
+                }
+            }
+        }
+
+        List<(Vector3D<float>, long, long)> points = [];
+        foreach (var (i, j) in overlapPairs)
+        {
+            var (v1bf, v1id) = before[i];
+            var (v1af, v1idd) = after[i];
+
+            var (v2bf, v2id) = before[j];
+            var (v2af, v2idd) = after[j];
+
+            if (v1id != v1idd || v2id != v2idd)
+                throw new Exception("The lists do not seem to match by ids at each index!");
+
+            // We consider v2 to be in origo and create a relative coordinate system from its position
+            var v1pos = v1bf.Sub(v2bf);
+
+            var v1mov = v1af.Sub(v1bf);
+            var v2mov = v2af.Sub(v2bf);
+
+            // Subtract the movement of the first drone to consider it static
+            var deltaMov = v1mov.Sub(v2mov);
+
+            var point = ProjectPointOntoSegment(new Vector3D<float>(0, 0, 0), v1pos, v1pos.Add(deltaMov));
+            points.Add((point, v1id, v2id));
+        }
+
+        return points;
+    }
+
+    /*
+     * <summary>
+     * Project a point P onto a line segment AB
+     * </summary>
+     */
+    private static Vector3D<float> ProjectPointOntoSegment(Vector3D<float> P, Vector3D<float> A, Vector3D<float> B)
+    {
+        Vector3D<float> d = B.Sub(A);
+        float t = Math.Clamp(P.Sub(A).Dot(d) / d.Dot(d), 0f, 1f);
+        return A.Add(d.Scale(t));
     }
 }

@@ -142,7 +142,7 @@ public class GWSim(ILogger logger) : IGWSimulation
             var drones = GetInitialDrones();
 
             foreach (var d in drones)
-                d.StaticBody3D.CallDeferred(Node.MethodName.AddChild, d.StaticBody3D);
+                Main.MainScene.CallDeferred(Node.MethodName.AddChild, d.StaticBody3D);
 
             lock (_droneLock)
             {

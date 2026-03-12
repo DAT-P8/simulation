@@ -11,11 +11,12 @@ using TDFSimulation;
 
 namespace Simulation.TDF;
 
-public class TDFSimulation(long id, int evaders, int pursuers, float attackerDomeRadius, float defenderDomeRadius, float arenaDomeRadius, float maxDroneSpeed, int seed) : ITDFSimulation
+public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, float attackerDomeRadius, float defenderDomeRadius, float arenaDomeRadius, float maxDroneSpeed, int seed) : ITDFSimulation
 {
     private readonly PackedScene _droneScene = GD.Load<PackedScene>("res://gw_drone.tscn");
     private readonly PackedScene _droneEvaderScene = GD.Load<PackedScene>("res://gw_drone_evader.tscn");
 
+    private readonly ILogger _logger = logger;
     private readonly long _id = id;
     private bool _terminated = false;
     private readonly int _evaderCount = evaders;
@@ -52,18 +53,20 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
             drone.SetForce(new Vector3D<float>(action.XF, action.YF, action.ZF));
         }
 
-        var positionsBefore = allDrones.Select(e => (e.GetPosition(), e.Id)).ToList();
+        var positionsBefore = allDrones.Select(e => e.GetPosition()).ToList();
         foreach (var drone in allDrones)
             drone.AdvanceTime(1);
-        var positionsAfter = allDrones.Select(e => (e.GetPosition(), e.Id)).ToList();
+        var positionsAfter = allDrones.Select(e => e.GetPosition()).ToList();
 
         var pointCalculations = SweepTests(positionsBefore, positionsAfter);
 
-        foreach (var (point, d1id, d2id) in pointCalculations)
+        foreach (var (point, v1idx, v2idx) in pointCalculations)
         {
             if (point.Dot(point) <= COLLISSION_RANGE * COLLISSION_RANGE)
             {
-
+                _logger.Information("Collission detected between drones {Idx1} and {Idx2}", v1idx, v2idx);
+                allDrones[v1idx].IsDestroyed = true;
+                allDrones[v2idx].IsDestroyed = true;
             }
         }
 
@@ -191,7 +194,7 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
         };
     }
 
-    private static List<(Vector3D<float>, long, long)> SweepTests(List<(Vector3D<float>, long)> before, List<(Vector3D<float>, long)> after)
+    private static List<(Vector3D<float>, int, int)> SweepTests(List<Vector3D<float>> before, List<Vector3D<float>> after)
     {
         // Sweep Tests in short:
         // See location of before and after and intepret this as constant motion
@@ -203,9 +206,9 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
 
         // Project to X axis and check only overlaps
         var orderedPairs = before.Zip(after).Select((e, i) =>
-                e.First.Item1.X < e.Second.Item1.X ?
-                    (e.First.Item1.X, e.Second.Item1.X) :
-                    (e.Second.Item1.X, e.First.Item1.X)
+                e.First.X < e.Second.X ?
+                    (e.First.X, e.Second.X) :
+                    (e.Second.X, e.First.X)
             ).ToList();
 
         List<HashSet<int>> overlapIndeces = [];
@@ -258,17 +261,14 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
             }
         }
 
-        List<(Vector3D<float>, long, long)> points = [];
+        List<(Vector3D<float>, int, int)> points = [];
         foreach (var (i, j) in overlapPairs)
         {
-            var (v1bf, v1id) = before[i];
-            var (v1af, v1idd) = after[i];
+            var v1bf = before[i];
+            var v1af = after[i];
 
-            var (v2bf, v2id) = before[j];
-            var (v2af, v2idd) = after[j];
-
-            if (v1id != v1idd || v2id != v2idd)
-                throw new Exception("The lists do not seem to match by ids at each index!");
+            var v2bf = before[j];
+            var v2af = after[j];
 
             // We consider v2 to be in origo and create a relative coordinate system from its position
             var v1pos = v1bf.Sub(v2bf);
@@ -280,7 +280,7 @@ public class TDFSimulation(long id, int evaders, int pursuers, float attackerDom
             var deltaMov = v1mov.Sub(v2mov);
 
             var point = ProjectPointOntoSegment(new Vector3D<float>(0, 0, 0), v1pos, v1pos.Add(deltaMov));
-            points.Add((point, v1id, v2id));
+            points.Add((point, i, j));
         }
 
         return points;

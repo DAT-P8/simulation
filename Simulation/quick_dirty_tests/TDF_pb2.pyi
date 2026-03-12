@@ -93,18 +93,22 @@ class TDFCloseResponse(_message.Message):
     def __init__(self, error_msg: _Optional[str] = ...) -> None: ...
 
 class TDFNewRequest(_message.Message):
-    __slots__ = ("evader_count", "pursuer_count", "evader_dome_radius", "pursuer_dome_radius", "arena_dome_radius")
+    __slots__ = ("evader_count", "pursuer_count", "evader_dome_radius", "pursuer_dome_radius", "arena_dome_radius", "drone_max_speed", "seed")
     EVADER_COUNT_FIELD_NUMBER: _ClassVar[int]
     PURSUER_COUNT_FIELD_NUMBER: _ClassVar[int]
     EVADER_DOME_RADIUS_FIELD_NUMBER: _ClassVar[int]
     PURSUER_DOME_RADIUS_FIELD_NUMBER: _ClassVar[int]
     ARENA_DOME_RADIUS_FIELD_NUMBER: _ClassVar[int]
+    DRONE_MAX_SPEED_FIELD_NUMBER: _ClassVar[int]
+    SEED_FIELD_NUMBER: _ClassVar[int]
     evader_count: int
     pursuer_count: int
     evader_dome_radius: float
     pursuer_dome_radius: float
     arena_dome_radius: float
-    def __init__(self, evader_count: _Optional[int] = ..., pursuer_count: _Optional[int] = ..., evader_dome_radius: _Optional[float] = ..., pursuer_dome_radius: _Optional[float] = ..., arena_dome_radius: _Optional[float] = ...) -> None: ...
+    drone_max_speed: float
+    seed: int
+    def __init__(self, evader_count: _Optional[int] = ..., pursuer_count: _Optional[int] = ..., evader_dome_radius: _Optional[float] = ..., pursuer_dome_radius: _Optional[float] = ..., arena_dome_radius: _Optional[float] = ..., drone_max_speed: _Optional[float] = ..., seed: _Optional[int] = ...) -> None: ...
 
 class TDFNewResponse(_message.Message):
     __slots__ = ("state", "error_msg")

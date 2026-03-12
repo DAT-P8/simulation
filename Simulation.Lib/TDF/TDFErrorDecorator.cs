@@ -30,7 +30,7 @@ public class TDFErrorDecorator(TDFSimulation.TDFSimulation.TDFSimulationBase inn
         catch (Exception e)
         {
             _logger.Error("TDF: Error calling DoStep with {Request}: {Error}", request, e);
-            throw;
+            return Task.FromResult(new TDFDoStepResponse { ErrorMsg = $"Server error: {e}" });
         }
     }
 

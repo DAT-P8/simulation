@@ -44,7 +44,8 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
 
     public Task<TDFState> DoStep(List<TDFDroneAction> actions)
     {
-        var allDrones = _attackers.Concat(_defenders).ToList();
+        throw new Exception("what the fuck v2");
+        var allDrones = _attackers.Concat(_defenders).Where(e => !e.IsDestroyed).ToList();
         foreach (var action in actions)
         {
             var drone = allDrones.First(e => e.Id == action.Id);
@@ -64,9 +65,18 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
         {
             if (point.Dot(point) <= COLLISSION_RANGE * COLLISSION_RANGE)
             {
+                var d1 = allDrones[v1idx];
+                var d2 = allDrones[v2idx];
+
                 _logger.Information("Collission detected between drones {Idx1} and {Idx2}", v1idx, v2idx);
-                allDrones[v1idx].IsDestroyed = true;
-                allDrones[v2idx].IsDestroyed = true;
+                d1.IsDestroyed = true;
+                d2.IsDestroyed = true;
+
+                d1.SetVelocity(new Vector3D<float>(0, 0, 0));
+                d1.SetForce(new Vector3D<float>(0, 0, 0));
+
+                d2.SetVelocity(new Vector3D<float>(0, 0, 0));
+                d2.SetForce(new Vector3D<float>(0, 0, 0));
             }
         }
 
@@ -264,22 +274,23 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
         List<(Vector3D<float>, int, int)> points = [];
         foreach (var (i, j) in overlapPairs)
         {
-            var v1bf = before[i];
-            var v1af = after[i];
+            var v1b = before[i];
+            var v1a = after[i];
 
-            var v2bf = before[j];
-            var v2af = after[j];
+            var v2b = before[j];
+            var v2a = after[j];
 
-            // We consider v2 to be in origo and create a relative coordinate system from its position
-            var v1pos = v1bf.Sub(v2bf);
+            // Movement vectors
+            var v1Mov = v1a.Sub(v1b);
+            var v2Mov = v2a.Sub(v2b);
+            var deltaMov = v1Mov.Sub(v2Mov);
 
-            var v1mov = v1af.Sub(v1bf);
-            var v2mov = v2af.Sub(v2bf);
+            var P = new Vector3D<float>(0, 0, 0);
+            var A = v1b.Sub(v2b);
+            var B = v1a.Sub(v2b);
+            var point = ProjectPointOntoSegment(P, A, B);
+            // Log.Logger.Information("ProjectPointOntoSegment({P}, {A}, {B}) = {Point}", P, A, B, point);
 
-            // Subtract the movement of the first drone to consider it static
-            var deltaMov = v1mov.Sub(v2mov);
-
-            var point = ProjectPointOntoSegment(new Vector3D<float>(0, 0, 0), v1pos, v1pos.Add(deltaMov));
             points.Add((point, i, j));
         }
 

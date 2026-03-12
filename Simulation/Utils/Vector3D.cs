@@ -25,6 +25,11 @@ public class Vector3D<T>(T x, T y, T z)
         _y = v.Y;
         _z = v.Z;
     }
+
+    public override string ToString()
+    {
+        return $"X: {_x}, Y: {_y}, Z: {_z}";
+    }
 }
 
 public static class VectorExtensions

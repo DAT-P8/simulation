@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using Serilog;
 using Simulation.GridEnvironment;
@@ -9,6 +10,14 @@ namespace Simulation;
 
 public partial class Main : Node3D
 {
+    public static Main MainScene { get; internal set; } = null!;
+
+    public Main()
+    {
+        if (MainScene != null) throw new Exception("MainScene was already constructed!");
+        MainScene = this;
+    }
+
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {

@@ -81,24 +81,16 @@ public class TDFDrone(StaticBody3D body, long id, bool isEvader, float maxSpeed)
      */
     public void AdvanceTime(float step)
     {
+        // Integrate velocity from acceleration
         var newVelocity = _velocity.Add(_force.Scale(step));
 
-        // If the new velocity exceeds the max speed, then scale it to max speed.
+        // Clamp velocity to max speed
         if (newVelocity.Dot(newVelocity) > _maxSpeed * _maxSpeed)
             newVelocity = newVelocity.Normalize().Scale(_maxSpeed);
 
-        var newPosition = _position.Add(_velocity.Scale(step).Add(_force.Scale(1 / 2 * step * step)));
-
-        // Check if the travelled distance exceeds the maximum allowed.
-        var deltaPos = newPosition.Sub(_position);
-        var travelledSquare = deltaPos.Dot(deltaPos);
-        var maxSquare = _maxSpeed * step * _maxSpeed * step;
-        if (travelledSquare > maxSquare)
-        {
-            var newTravelled = deltaPos.Normalize().Scale(_maxSpeed * step);
-            newPosition = _position.Add(newTravelled);
-        }
-
+        // Derive position from the *already-clamped* velocity, with a Verlet-style integrator
+        var avgVelocity = _velocity.Add(newVelocity).Scale(0.5f);
+        var newPosition = _position.Add(avgVelocity.Scale(step));
 
         SetVelocity(newVelocity);
         SetPosition(newPosition);

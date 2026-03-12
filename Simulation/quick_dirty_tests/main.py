@@ -52,8 +52,6 @@ class Simulation:
             )
         )
         self.state = resp.state
-
-        print("X:", self.state.drone_states[0].x, "Y:", self.state.drone_states[0].y)
         return any([drone_state.x == 5 and drone_state.y == 5 for drone_state in self.state.drone_states])
 
 

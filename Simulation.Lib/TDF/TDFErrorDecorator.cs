@@ -8,11 +8,11 @@ public class TDFErrorDecorator(TDFSimulation.TDFSimulation.TDFSimulationBase inn
     private readonly ILogger _logger = logger;
     private readonly TDFSimulation.TDFSimulation.TDFSimulationBase _inner = inner;
 
-    public override Task<TDFCloseResponse> Close(TDFCloseRequest request, Grpc.Core.ServerCallContext context)
+    public override async Task<TDFCloseResponse> Close(TDFCloseRequest request, Grpc.Core.ServerCallContext context)
     {
         try
         {
-            return _inner.Close(request, context);
+            return await _inner.Close(request, context);
         }
         catch (Exception e)
         {
@@ -21,24 +21,24 @@ public class TDFErrorDecorator(TDFSimulation.TDFSimulation.TDFSimulationBase inn
         }
     }
 
-    public override Task<TDFDoStepResponse> DoStep(TDFDoStepRequest request, Grpc.Core.ServerCallContext context)
+    public override async Task<TDFDoStepResponse> DoStep(TDFDoStepRequest request, Grpc.Core.ServerCallContext context)
     {
         try
         {
-            return _inner.DoStep(request, context);
+            return await _inner.DoStep(request, context);
         }
         catch (Exception e)
         {
             _logger.Error("TDF: Error calling DoStep with {Request}: {Error}", request, e);
-            return Task.FromResult(new TDFDoStepResponse { ErrorMsg = $"Server error: {e}" });
+            throw;
         }
     }
 
-    public override Task<TDFNewResponse> New(TDFNewRequest request, Grpc.Core.ServerCallContext context)
+    public override async Task<TDFNewResponse> New(TDFNewRequest request, Grpc.Core.ServerCallContext context)
     {
         try
         {
-            return _inner.New(request, context);
+            return await _inner.New(request, context);
         }
         catch (Exception e)
         {
@@ -47,11 +47,11 @@ public class TDFErrorDecorator(TDFSimulation.TDFSimulation.TDFSimulationBase inn
         }
     }
 
-    public override Task<TDFResetResponse> Reset(TDFResetRequest request, Grpc.Core.ServerCallContext context)
+    public override async Task<TDFResetResponse> Reset(TDFResetRequest request, Grpc.Core.ServerCallContext context)
     {
         try
         {
-            return _inner.Reset(request, context);
+            return await _inner.Reset(request, context);
         }
         catch (Exception e)
         {

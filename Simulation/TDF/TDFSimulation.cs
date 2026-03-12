@@ -44,11 +44,10 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
 
     public Task<TDFState> DoStep(List<TDFDroneAction> actions)
     {
-        throw new Exception("what the fuck v2");
         var allDrones = _attackers.Concat(_defenders).Where(e => !e.IsDestroyed).ToList();
         foreach (var action in actions)
         {
-            var drone = allDrones.First(e => e.Id == action.Id);
+            var drone = allDrones.FirstOrDefault(e => e.Id == action.Id);
             if (drone is null) continue;
 
             drone.SetForce(new Vector3D<float>(action.XF, action.YF, action.ZF));
@@ -68,7 +67,7 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
                 var d1 = allDrones[v1idx];
                 var d2 = allDrones[v2idx];
 
-                _logger.Information("Collission detected between drones {Idx1} and {Idx2}", v1idx, v2idx);
+                _logger.Information("Collission detected: between drones {Idx1} and {Idx2}", v1idx, v2idx);
                 d1.IsDestroyed = true;
                 d2.IsDestroyed = true;
 
@@ -289,7 +288,6 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
             var A = v1b.Sub(v2b);
             var B = v1a.Sub(v2b);
             var point = ProjectPointOntoSegment(P, A, B);
-            // Log.Logger.Information("ProjectPointOntoSegment({P}, {A}, {B}) = {Point}", P, A, B, point);
 
             points.Add((point, i, j));
         }

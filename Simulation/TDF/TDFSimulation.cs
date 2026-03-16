@@ -203,17 +203,8 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
         };
     }
 
-    private static List<(Vector3D<float>, int, int)> SweepTests(List<Vector3D<float>> before, List<Vector3D<float>> after)
+    public static List<(Vector3D<float>, int, int)> SweepTests(List<Vector3D<float>> before, List<Vector3D<float>> after)
     {
-        // Sweep Tests in short:
-        // See location of before and after and intepret this as constant motion
-        // If two drones paths intersect, we will need to test if their motions overlap
-        // This is done by subtracting the motion of one drone from another s.t. the one drone can be seen as stationary
-        // With one drone as stationary, we can simply use a ray to test if the non-stationary drone will overlap with the stationary.
-        // If overlap => they do collide
-        // If non-overlap => they do not collide
-
-        // Project to X axis and check only overlaps
         var orderedPairs = before.Zip(after).Select((e, i) =>
                 e.First.X < e.Second.X ?
                     (e.First.X, e.Second.X) :
@@ -261,11 +252,12 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
         List<(int, int)> overlapPairs = [];
         foreach (var overlap in overlaps)
         {
-            for (int i = 0; i < overlap.Count; i++)
+            var overlapList = overlap.ToList();
+            for (int i = 0; i < overlapList.Count; i++)
             {
-                for (int j = i + 1; j < overlap.Count; j++)
+                for (int j = i + 1; j < overlapList.Count; j++)
                 {
-                    overlapPairs.Add((i, j));
+                    overlapPairs.Add((overlapList[i], overlapList[j]));
                 }
             }
         }
@@ -286,7 +278,7 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
 
             var P = new Vector3D<float>(0, 0, 0);
             var A = v1b.Sub(v2b);
-            var B = v1a.Sub(v2b);
+            var B = A.Add(deltaMov);
             var point = ProjectPointOntoSegment(P, A, B);
 
             points.Add((point, i, j));
@@ -303,7 +295,12 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
     private static Vector3D<float> ProjectPointOntoSegment(Vector3D<float> P, Vector3D<float> A, Vector3D<float> B)
     {
         Vector3D<float> d = B.Sub(A);
-        float t = Math.Clamp(P.Sub(A).Dot(d) / d.Dot(d), 0f, 1f);
+        float dDotD = d.Dot(d);
+
+        if (dDotD == 0f)
+            return A;
+
+        float t = Math.Clamp(P.Sub(A).Dot(d) / dDotD, 0f, 1f);
         return A.Add(d.Scale(t));
     }
 }

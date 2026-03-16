@@ -102,7 +102,7 @@ public class CollisionTests
         foreach (var (point, _, _) in points)
             Assert.InRange(point.Dot(point), 0f, 1f);
     }
-    
+
     [Theory]
     [MemberData(nameof(NonCollidingPointData))]
     public void TestNonColliding(List<Vector3D<float>> beforePositions, List<Vector3D<float>> afterPositions)

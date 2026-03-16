@@ -144,7 +144,7 @@ public static class VectorExtensions
 
         return EqualsWithEpsilon(v1, v2, epsilon);
     }
-    
+
     /**
      * <summary>
      * Provides a comparison between vectors but with a small acceptable difference.

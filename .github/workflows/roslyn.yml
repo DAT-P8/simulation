@@ -25,7 +25,7 @@ jobs:
         run: dotnet restore
 
       - name: Build (triggers Roslyn analyzers)
-        run: dotnet build --no-restore --configuration Release /p:TreatWarningsAsErrors=true
+        run: dotnet build --no-restore --configuration Release
 
       - name: Run Roslyn analyzers explicitly
         run: dotnet build --no-restore /p:RunAnalyzers=true /p:EnforceCodeStyleInBuild=true

@@ -67,7 +67,6 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
                 var d1 = allDrones[v1idx];
                 var d2 = allDrones[v2idx];
 
-                _logger.Information("Collission detected: between drones {Idx1} and {Idx2}", v1idx, v2idx);
                 d1.IsDestroyed = true;
                 d2.IsDestroyed = true;
 
@@ -76,6 +75,18 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
 
                 d2.SetVelocity(new Vector3D<float>(0, 0, 0));
                 d2.SetForce(new Vector3D<float>(0, 0, 0));
+            }
+        }
+
+        var arenaSq = _arenaDomeRadius * _arenaDomeRadius;
+        foreach (var d in allDrones)
+        {
+            var pos = d.GetPosition();
+            if (pos.Dot(pos) > arenaSq)
+            {
+                d.IsDestroyed = true;
+                d.SetVelocity(new Vector3D<float>(0, 0, 0));
+                d.SetForce(new Vector3D<float>(0, 0, 0));
             }
         }
 
@@ -159,8 +170,7 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
                 {
                     var v2 = positions[j];
 
-                    // This check needs to be even more loose!
-                    if (v1.EqualsWithEpsilon(v2))
+                    if (v1.EqualsWithEpsilon(v2, 2f))
                     {
                         idsToRemove.Add(i);
                         break;

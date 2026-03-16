@@ -142,6 +142,16 @@ public static class VectorExtensions
     {
         float epsilon = 1e-6F;
 
+        return EqualsWithEpsilon(v1, v2, epsilon);
+    }
+    
+    /**
+     * <summary>
+     * Provides a comparison between vectors but with a small acceptable difference.
+     * </summary>
+     */
+    public static bool EqualsWithEpsilon(this Vector3D<float> v1, Vector3D<float> v2, float epsilon)
+    {
         return Math.Abs(v1.X - v2.X) < epsilon &&
             Math.Abs(v1.Y - v2.Y) < epsilon &&
             Math.Abs(v1.Z - v2.Z) < epsilon;

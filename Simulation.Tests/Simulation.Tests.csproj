@@ -12,6 +12,10 @@
   <ItemGroup>
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Disable Godot source generators in test project -->
+    <Analyzer Remove="@(Analyzer)" Condition="'%(Filename)' == 'GodotSourceGenerators'" />
+  </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />

@@ -5,8 +5,9 @@ using TDFSimulation;
 
 namespace Simulation.TDF;
 
-public class TDFDrone(StaticBody3D body, long id, bool isEvader) : IDisposable
+public class TDFDrone(StaticBody3D body, long id, bool isEvader, float maxSpeed) : IDisposable
 {
+    private readonly float _maxSpeed = maxSpeed;
     private readonly bool _isEvader = isEvader;
     private readonly StaticBody3D _body = body;
     private readonly long _id = id;
@@ -80,19 +81,20 @@ public class TDFDrone(StaticBody3D body, long id, bool isEvader) : IDisposable
      */
     public void AdvanceTime(float step)
     {
-        // TODO: Scale this variable by some means maybe? What is the MAX acceleration? Max speed? Linear interpolation? Some other?
-        var new_velocity = _velocity.Add(_force.Scale(step));
-        var new_position = _position.Add(_velocity.Scale(step).Add(_force.Scale(1 / 2 * step * step)));
+        // Integrate velocity from acceleration
+        var newVelocity = _velocity.Add(_force.Scale(step));
 
-        SetVelocity(new_velocity);
-        SetPosition(new_position);
+        // Clamp velocity to max speed
+        if (newVelocity.Dot(newVelocity) > _maxSpeed * _maxSpeed)
+            newVelocity = newVelocity.Normalize().Scale(_maxSpeed);
+
+        // Derive position from the *already-clamped* velocity, with a Verlet-style integrator
+        var avgVelocity = _velocity.Add(newVelocity).Scale(0.5f);
+        var newPosition = _position.Add(avgVelocity.Scale(step));
+
+        SetVelocity(newVelocity);
+        SetPosition(newPosition);
     }
-
-    /*
-       a = const
-       v = integral a = v0 + x * a
-       p = integral v = v0 * x + 1/2 * x^2 * a
-       */
 
     public TDFDroneState GetState()
     {

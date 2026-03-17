@@ -14,7 +14,7 @@ public partial class Main : Node3D
 
     public Main()
     {
-        if (MainScene != null) throw new Exception("MainScene was already constructed!");
+        if (MainScene != null) throw new Exception("MainScene is already constructed!");
         MainScene = this;
     }
 

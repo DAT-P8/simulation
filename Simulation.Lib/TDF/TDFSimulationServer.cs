@@ -73,7 +73,16 @@ public class TDFSimulationServer(ITDFSimulationFactory simulationFactory, ILogge
         try
         {
             var id = GetNewId();
-            simulation = await _simulationFactory.CreateSimulation(id, request.EvaderCount, request.PursuerCount, request.EvaderDomeRadius, request.PursuerDomeRadius, request.ArenaDomeRadius);
+            simulation = await _simulationFactory.CreateSimulation(
+                id,
+                request.EvaderCount,
+                request.PursuerCount,
+                request.EvaderDomeRadius,
+                request.PursuerDomeRadius,
+                request.ArenaDomeRadius,
+                request.DroneMaxSpeed,
+                request.Seed
+            );
             _simulations.Add(id, new SimulationDate(simulation, DateTime.UtcNow));
         }
         finally

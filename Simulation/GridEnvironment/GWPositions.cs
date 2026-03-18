@@ -1,3 +1,3 @@
 namespace Simulation.GridEnvironment;
 
-public record GWPosition(int X, int Y, int Z);
+public record GWPosition(float X, float Y, float Z);

@@ -20,14 +20,14 @@ namespace Simulation.GridEnvironment
 
             MeshInstance3D mesh3d = new();
             mesh3d.SetMesh(mesh);
-            mesh3d.SetPosition(new Vector3(4.5F, 0, 4.5F));
+            // mesh3d.SetPosition(new Vector3(4.5F, 0, 4.5F));
             return mesh3d;
         }
 
         public SubViewport GenerateTexture()
         {
             //Add room for visible map borders
-            mapSize += 4;
+            mapSize += 2;
 
             //(map size + 2 borders) * tile size
             Vector2I textureDim = new(mapSize * tileSize, mapSize * tileSize);

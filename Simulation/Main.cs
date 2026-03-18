@@ -10,35 +10,36 @@ namespace Simulation;
 
 public partial class Main : Node3D
 {
-    public static Main MainScene { get; internal set; } = null!;
+	public static Main MainScene { get; internal set; } = null!;
+	private const int mapSize = 9;
 
-    public Main()
-    {
-        if (MainScene != null) throw new Exception("MainScene is already constructed!");
-        MainScene = this;
-    }
+	public Main()
+	{
+		if (MainScene != null) throw new Exception("MainScene is already constructed!");
+		MainScene = this;
+	}
 
-    // Called when the node enters the scene tree for the first time.
-    public override void _Ready()
-    {
-        var logger = new LoggerConfiguration()
-            .WriteTo.Console()
-            .CreateLogger();
-        Log.Logger = logger;
+	// Called when the node enters the scene tree for the first time.
+	public override void _Ready()
+	{
+		var logger = new LoggerConfiguration()
+			.WriteTo.Console()
+			.CreateLogger();
+		Log.Logger = logger;
 
-        var gwFactory = new GWSimulationFactory();
-        var tdfFactory = new TDFSimulationFactory();
-        var world = new GWMap(10);
-        var view = world.GenerateTexture();
-        AddChild(view);
-        AddChild(world.ConstructMap(view));
+		var gwFactory = new GWSimulationFactory(mapSize);
+		var tdfFactory = new TDFSimulationFactory();
+		var world = new GWMap(mapSize);
+		var view = world.GenerateTexture();
+		AddChild(view);
+		AddChild(world.ConstructMap(view));
 
-        var server = new Server(logger, "localhost", 50051, gwFactory, tdfFactory);
-        server.StartServer();
-    }
+		var server = new Server(logger, "localhost", 50051, gwFactory, tdfFactory);
+		server.StartServer();
+	}
 
-    // Called every frame. 'delta' is the elapsed time since the previous frame.
-    public override void _Process(double delta)
-    {
-    }
+	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	public override void _Process(double delta)
+	{
+	}
 }

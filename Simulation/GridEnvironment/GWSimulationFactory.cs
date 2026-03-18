@@ -4,10 +4,10 @@ using Simulation.Lib.GW;
 
 namespace Simulation.GridEnvironment;
 
-public class GWSimulationFactory : IGWSimulationFactory
+public class GWSimulationFactory(int mapSize) : IGWSimulationFactory
 {
     public Task<IGWSimulation> CreateSimulation()
     {
-        return Task.FromResult<IGWSimulation>(new GWSim(Log.Logger));
+        return Task.FromResult<IGWSimulation>(new GWSim(Log.Logger, mapSize));
     }
 }

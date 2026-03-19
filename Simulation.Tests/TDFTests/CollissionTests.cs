@@ -54,7 +54,7 @@ public class CollisionTests
             // Very close miss
             [
                 new List<Vector3D<float>> { new(0, 0, 0), new(5f, 5f, 5f) },
-                new List<Vector3D<float>> { new(8.5f, 8.5f, 8.5f), new(10f, 10f, 10f) }
+                new List<Vector3D<float>> { new(8.9f, 8.9f, 8.9f), new(10f, 10f, 10f) }
             ]
         ];
 

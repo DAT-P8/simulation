@@ -36,6 +36,11 @@ public class CollisionTests
                 new List<Vector3D<float>> { new(10f, 10f, 10f), new(0f, 0f, 0f) },
                 new List<Vector3D<float>> { new(20f, 20f, 20f), new(15f, 15f, 15f) }
             ],
+            // Chase sequence, second
+            [
+                new List<Vector3D<float>> { new(10f, 10f, 0f), new(0f, 0f, 0f) },
+                new List<Vector3D<float>> { new(20f, 20f, 0f), new(12f, 12f, 0f) }
+            ],
             // Stationary points
             [
                 new List<Vector3D<float>> { new(0f, 0f, 0f), new(2f, 0f, 0f) },
@@ -45,6 +50,11 @@ public class CollisionTests
             [
                 new List<Vector3D<float>> { new(-5f, 0f, 0f), new(5f, 0f, 0f) },
                 new List<Vector3D<float>> { new(0f, -1f, 0f), new(0f, 11f, 0f) }
+            ],
+            // Very close miss
+            [
+                new List<Vector3D<float>> { new(0, 0, 0), new(5f, 5f, 5f) },
+                new List<Vector3D<float>> { new(8.5f, 8.5f, 8.5f), new(10f, 10f, 10f) }
             ]
         ];
 

@@ -289,28 +289,11 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
             var P = new Vector3D<float>(0, 0, 0);
             var A = v1b.Sub(v2b);
             var B = A.Add(deltaMov);
-            var point = ProjectPointOntoSegment(P, A, B);
+            var point = VectorExtensions.ProjectPointOntoSegment(P, A, B);
 
             points.Add((point, i, j));
         }
 
         return points;
-    }
-
-    /*
-     * <summary>
-     * Project a point P onto a line segment AB
-     * </summary>
-     */
-    private static Vector3D<float> ProjectPointOntoSegment(Vector3D<float> P, Vector3D<float> A, Vector3D<float> B)
-    {
-        Vector3D<float> d = B.Sub(A);
-        float dDotD = d.Dot(d);
-
-        if (dDotD == 0f)
-            return A;
-
-        float t = Math.Clamp(P.Sub(A).Dot(d) / dDotD, 0f, 1f);
-        return A.Add(d.Scale(t));
     }
 }

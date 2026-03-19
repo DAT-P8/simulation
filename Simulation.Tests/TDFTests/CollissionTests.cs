@@ -114,6 +114,8 @@ public class CollisionTests
     {
         var points = TDF.TDFSimulation.SweepTests(beforePositions, afterPositions);
 
+        Assert.NotEmpty(points);
+
         foreach (var (point, _, _) in points)
             Assert.InRange(point.Dot(point), 0f, 1f);
     }

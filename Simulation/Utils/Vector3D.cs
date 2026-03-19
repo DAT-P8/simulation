@@ -170,4 +170,21 @@ public static class VectorExtensions
             Math.Abs(v1.Y - v2.Y) < epsilon &&
             Math.Abs(v1.Z - v2.Z) < epsilon;
     }
+    
+    /*
+     * <summary>
+     * Project a point P onto a line segment AB
+     * </summary>
+     */
+    public static Vector3D<float> ProjectPointOntoSegment(Vector3D<float> P, Vector3D<float> A, Vector3D<float> B)
+    {
+        Vector3D<float> d = B.Sub(A);
+        float dDotD = d.Dot(d);
+
+        if (dDotD == 0f)
+            return A;
+
+        float t = Math.Clamp(P.Sub(A).Dot(d) / dDotD, 0f, 1f);
+        return A.Add(d.Scale(t));
+    }
 }

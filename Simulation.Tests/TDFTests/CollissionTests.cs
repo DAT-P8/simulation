@@ -101,6 +101,11 @@ public class CollisionTests
                 new List<Vector3D<float>> { new(0f, 0f, 0f), new(0f, 0f, 0f) },
                 new List<Vector3D<float>> { new(.9f, 0f, 0f), new(.9f, 0f, 0f) }
             ],
+            // Just barely a collision
+            [
+                new List<Vector3D<float>> { new(0, 0, 0), new(5f, 5f, 5f) },
+                new List<Vector3D<float>> { new(9.1f, 9.1f, 9.1f), new(10f, 10f, 10f) }
+            ]
         ];
 
     [Theory]

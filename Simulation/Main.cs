@@ -11,7 +11,7 @@ namespace Simulation;
 public partial class Main : Node3D
 {
 	public static Main MainScene { get; internal set; } = null!;
-	private const int mapSize = 9;
+	private const int mapSize = 8;
 
 	public Main()
 	{
@@ -27,9 +27,10 @@ public partial class Main : Node3D
 			.CreateLogger();
 		Log.Logger = logger;
 
-		var gwFactory = new GWSimulationFactory(mapSize);
+		GWEnvData envData = new(mapSize);
+		var gwFactory = new GWSimulationFactory(envData);
 		var tdfFactory = new TDFSimulationFactory();
-		var world = new GWMap(mapSize);
+		var world = new GWMap(envData);
 		var view = world.GenerateTexture();
 		AddChild(view);
 		AddChild(world.ConstructMap(view));

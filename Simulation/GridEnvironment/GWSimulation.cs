@@ -10,7 +10,7 @@ using Simulation.Lib.GW;
 
 namespace Simulation.GridEnvironment;
 
-public class GWSim(ILogger logger, int mapSize) : IGWSimulation
+public class GWSim(ILogger logger, GWEnvData envdata) : IGWSimulation
 {
     private readonly long Defender1Id = 0;
     private readonly long Defender2Id = 1;
@@ -23,13 +23,6 @@ public class GWSim(ILogger logger, int mapSize) : IGWSimulation
     private readonly object _droneLock = new();
 
     private bool _isTerminated = false;
-
-    private readonly float halfSize = (float)Math.Floor(mapSize / 2.0);
-    private readonly float offset = (mapSize & 1) == 1 ? 0.5f : 0.0f;
-    private readonly Func<float,float> applyOffset = pos => {
-        float lOffset = (mapSize & 1) == 1 ? 0.5f : 0.0f;
-        return pos > 0 ? pos + lOffset : pos - lOffset;
-    };
 
     public Task Close()
     {
@@ -87,14 +80,14 @@ public class GWSim(ILogger logger, int mapSize) : IGWSimulation
                 drone.Destroyed = true;
 
             // Defender drones are not allowed in the target area.
-            if (!drone.IsEvader && newX == offset && newZ == offset)
+            if (!drone.IsEvader && envdata.IsInTarget((newX, newZ)))
                 continue;
 
             drone.SetPosition(new GWPosition(newX, 0, newZ));
         }
 
-        // Any evader reaches target (5, 5)
-        _isTerminated = _drones.Any(e => e.Value.X == 0 && e.Value.Z == 0 && e.Value.IsEvader);
+        // Any evader reaches target
+        _isTerminated = _drones.Any(e => envdata.IsInTarget((e.Value.X, e.Value.Z))  && e.Value.IsEvader);
         if (_isTerminated)
             return Task.FromResult(GetState());
 
@@ -173,16 +166,16 @@ public class GWSim(ILogger logger, int mapSize) : IGWSimulation
 
         var lower = (1 & random.Next()) == 1;
         var left = (1 & random.Next()) == 1;
-        var rand = applyOffset(random.Next(-(int)halfSize, (int)halfSize));
+        var rand = envdata.ApplyOffset(random.Next(-envdata.GetHalfSize, envdata.GetHalfSize));
 
-        GWPosition defender_drone_1 = new(applyOffset(1), 0, applyOffset(0));
-        GWPosition defender_drone_2 = new(applyOffset(0), 0, applyOffset(1));
+        GWPosition defender_drone_1 = new(envdata.ApplyOffset(1), 0, envdata.ApplyOffset(0));
+        GWPosition defender_drone_2 = new(envdata.ApplyOffset(0), 0, envdata.ApplyOffset(1));
 
         GWPosition evader_position;
         if (lower)
-            evader_position = new(!left ? rand : applyOffset(halfSize), 0, left ? rand : -applyOffset(halfSize));
+            evader_position = new(!left ? rand : envdata.ApplyOffset(envdata.GetHalfSize), 0, left ? rand : -envdata.ApplyOffset(envdata.GetHalfSize));
         else
-            evader_position = new(!left ? rand : applyOffset(halfSize), 0, left ? rand : applyOffset(halfSize));
+            evader_position = new(!left ? rand : envdata.ApplyOffset(envdata.GetHalfSize), 0, left ? rand : envdata.ApplyOffset(envdata.GetHalfSize));
 
         GWPosition evader_drone = evader_position; //Possble off by 1 error here
 
@@ -231,6 +224,6 @@ public class GWSim(ILogger logger, int mapSize) : IGWSimulation
     private bool IsInBounds(float x, float z)
     {
         //Offset shouldn't need to be applied since drones move further than the offset
-        return -halfSize <= x && x <= halfSize && -halfSize <= z && z <= halfSize;
+        return -envdata.GetHalfSize <= x && x <= envdata.GetHalfSize && -envdata.GetHalfSize <= z && z <= envdata.GetHalfSize;
     }
 }

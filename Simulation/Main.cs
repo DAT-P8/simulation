@@ -2,6 +2,7 @@ using System;
 using Godot;
 using Serilog;
 using Simulation.GridEnvironment;
+using Serilog.Events;
 using Simulation.Lib;
 using Simulation.TDF;
 
@@ -21,8 +22,10 @@ public partial class Main : Node3D
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
+        var logLevel = RetrieveLogLevelFromArgs();
         var logger = new LoggerConfiguration()
             .WriteTo.Console()
+            .MinimumLevel.Is(logLevel)
             .CreateLogger();
         Log.Logger = logger;
 
@@ -40,5 +43,21 @@ public partial class Main : Node3D
     // Called every frame. 'delta' is the elapsed time since the previous frame.
     public override void _Process(double delta)
     {
+    }
+
+    private LogEventLevel RetrieveLogLevelFromArgs()
+    {
+        var logLevel = LogEventLevel.Error; // default
+        var args = OS.GetCmdlineArgs();
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i] == "--log-level" && i + 1 < args.Length)
+            {
+                if (Enum.TryParse<LogEventLevel>(args[i + 1], ignoreCase: true, out var parsed))
+                    logLevel = parsed;
+                break;
+            }
+        }
+        return logLevel;
     }
 }

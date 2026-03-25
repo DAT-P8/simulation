@@ -60,10 +60,12 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
 
         var pointCalculations = SweepTests(positionsBefore, positionsAfter);
 
+        List<List<long>> collisionIds = [];
         foreach (var (point, v1idx, v2idx) in pointCalculations)
         {
             if (point.Dot(point) <= COLLISSION_RANGE * COLLISSION_RANGE)
             {
+                collisionIds.Add([v1idx, v2idx]);
                 var d1 = allDrones[v1idx];
                 var d2 = allDrones[v2idx];
 
@@ -78,19 +80,39 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
             }
         }
 
+        List<long> outOfBoundsIds = [];
         var arenaSq = _arenaDomeRadius * _arenaDomeRadius;
         foreach (var d in allDrones)
         {
             var pos = d.GetPosition();
             if (pos.Dot(pos) > arenaSq)
             {
+                outOfBoundsIds.Add(d.Id);
                 d.IsDestroyed = true;
                 d.SetVelocity(new Vector3D<float>(0, 0, 0));
                 d.SetForce(new Vector3D<float>(0, 0, 0));
             }
         }
+        var outOfBoundsEvents = outOfBoundsIds.Select(e => {
+                return new TDFEvent
+                {
+                    DroneOutOfBounds = new DroneOutOfBoundsEvent { DroneId = 0 }
+                };
+            }).ToList();
+        var collisionEvents = collisionIds.Select(e => {
+                return new TDFEvent
+                {
+                    Collision = new CollisionEvent { DroneIds = { e.ToList() } }
+                };
+            }).ToList();
 
-        return Task.FromResult(GetState());
+        List<TDFEvent> events =
+        [
+            .. outOfBoundsEvents,
+            .. collisionEvents
+        ];
+
+        return Task.FromResult(GetState(events));
     }
 
     public Task<TDFState> New()
@@ -210,6 +232,18 @@ public class TDFSimulation(ILogger logger, long id, int evaders, int pursuers, f
             SimId = _id,
             Terminated = _terminated,
             DroneStates = { _defenders.Concat(_attackers).Select(e => e.GetState()).ToList() },
+            Events = {},
+        };
+    }
+    
+    private TDFState GetState(List<TDFEvent> events)
+    {
+        return new TDFState
+        {
+            SimId = _id,
+            Terminated = _terminated,
+            DroneStates = { _defenders.Concat(_attackers).Select(e => e.GetState()).ToList() },
+            Events = { events },
         };
     }
 

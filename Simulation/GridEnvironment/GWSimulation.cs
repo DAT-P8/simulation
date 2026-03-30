@@ -7,10 +7,11 @@ using GWSimulation;
 using Serilog;
 using Simulation.Lib;
 using Simulation.Lib.GW;
+using Simulation.GridEnvironment.GridMaps;
 
 namespace Simulation.GridEnvironment;
 
-public class GWSim(ILogger logger) : IGWSimulation
+public class GWSim(ILogger logger, GWBoxEnvData envData) : IGWSimulation
 {
     private readonly long Defender1Id = 0;
     private readonly long Defender2Id = 1;
@@ -24,6 +25,7 @@ public class GWSim(ILogger logger) : IGWSimulation
 
     private bool _isTerminated = false;
 
+    private readonly GWBoxEnvData envData = envData;
 
     public Task Close()
     {
@@ -77,18 +79,18 @@ public class GWSim(ILogger logger) : IGWSimulation
             var newX = x_pos + x_diff;
             var newZ = z_pos + z_diff;
 
-            if (!IsInBounds(newX, newZ))
+            if (!envData.IsInBounds(newX, newZ))
                 drone.Destroyed = true;
 
             // Defender drones are not allowed in the target area.
-            if (!drone.IsEvader && newX == 5 && newZ == 5)
+            if (!drone.IsEvader && envData.IsInTarget(newX, newZ))
                 continue;
 
             drone.SetPosition(new GWPosition(newX, 0, newZ));
         }
 
         // Any evader reaches target (5, 5)
-        _isTerminated = _drones.Any(e => e.Value.X == 5 && e.Value.Z == 5 && e.Value.IsEvader);
+        _isTerminated = _drones.Any(e => envData.IsInTarget(e.Value.X, e.Value.Z) && e.Value.IsEvader);
         if (_isTerminated)
             return Task.FromResult(GetState());
 
@@ -127,7 +129,7 @@ public class GWSim(ILogger logger) : IGWSimulation
             var defender_drone_2 = _drones[Defender2Id];
             var evader_drone = _drones[EvaderId];
 
-            var positions = GetInitialPositions();
+            var positions = GetInitialPositions(envData.GetMapSize);
 
             defender_drone_1.SetPosition(positions.Defender1);
             defender_drone_2.SetPosition(positions.Defender2);
@@ -161,13 +163,13 @@ public class GWSim(ILogger logger) : IGWSimulation
         public required GWPosition Evader;
     }
 
-    private static Positions GetInitialPositions()
+    private static Positions GetInitialPositions(int mapSize)
     {
         Random random = new();
 
         var lower = (1 & random.Next()) == 1;
         var left = (1 & random.Next()) == 1;
-        var rand = random.Next(0, 11);
+        var rand = random.Next(0, mapSize);
 
         GWPosition defender_drone_1 = new(6, 0, 5);
         GWPosition defender_drone_2 = new(5, 0, 6);
@@ -176,7 +178,7 @@ public class GWSim(ILogger logger) : IGWSimulation
         if (lower)
             evader_position = new(!left ? rand : 0, 0, left ? rand : 0);
         else
-            evader_position = new(!left ? rand : 10, 0, left ? rand : 10);
+            evader_position = new(!left ? rand : mapSize, 0, left ? rand : mapSize);
 
         GWPosition evader_drone = evader_position;
 
@@ -194,7 +196,7 @@ public class GWSim(ILogger logger) : IGWSimulation
         var defender_drone_2 = new GWDrone(_droneScene.Instantiate<StaticBody3D>(), Defender2Id, false);
         var evader_drone = new GWDrone(_droneEvaderScene.Instantiate<StaticBody3D>(), EvaderId, true);
 
-        var positions = GetInitialPositions();
+        var positions = GetInitialPositions(envData.GetMapSize);
         defender_drone_1.SetPosition(positions.Defender1);
         defender_drone_2.SetPosition(positions.Defender2);
         evader_drone.SetPosition(positions.Evader);

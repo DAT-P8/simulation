@@ -24,5 +24,6 @@
     <Protobuf Include="../Protos/main.proto" />
     <Protobuf Include="../Protos/grid_world.proto" />
     <Protobuf Include="../Protos/TDF.proto" />
+    <Protobuf Include="../Protos/ngw/v1/ngw2d.proto" />
   </ItemGroup>
 </Project>

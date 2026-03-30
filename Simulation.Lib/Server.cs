@@ -33,7 +33,8 @@ public class Server(
         {
             Services = {
                 GWSimulation.GWSimulation.BindService(gwErrorDecorator),
-                TDFSimulation.TDFSimulation.BindService(tdfErrorDecorator)
+                TDFSimulation.TDFSimulation.BindService(tdfErrorDecorator),
+                GW2D.NGWSimulationService.BindService(),
             },
             Ports = { new ServerPort(_host, _port, ServerCredentials.Insecure) }
         };

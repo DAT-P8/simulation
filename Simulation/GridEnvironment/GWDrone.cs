@@ -9,13 +9,13 @@ public class GWDrone(StaticBody3D staticBody3D, long id, bool isEvader)
     private readonly long _id = id;
     private readonly bool _isEvader = isEvader;
 
-    public float X => _x;
-    public float Y => _y;
-    public float Z => _z;
+    public int X => _x;
+    public int Y => _y;
+    public int Z => _z;
 
-    private float _x = 0;
-    private float _y = 0;
-    private float _z = 0;
+    private int _x = 0;
+    private int _y = 0;
+    private int _z = 0;
 
     public StaticBody3D StaticBody3D => _staticBody3D;
     public bool IsEvader => _isEvader;
@@ -28,18 +28,18 @@ public class GWDrone(StaticBody3D staticBody3D, long id, bool isEvader)
         _y = position.Y;
         _z = position.Z;
 
-        StaticBody3D.CallDeferred(Node3D.MethodName.SetPosition, new Vector3(position.X, position.Y, position.Z));
+        StaticBody3D.CallDeferred(Node3D.MethodName.SetPosition, position.ToVector());
     }
 
-    public GWPosition GetPosition() => new(_x, _y, _z);
+    //public GWPosition GetPosition() => new(_x, _y, _z);
 
     public GWDroneState GetState()
     {
         return new GWDroneState
         {
             Id = _id,
-            X = (long)_x,
-            Y = (long)_z,
+            X = _x,
+            Y = _z,
             Destroyed = Destroyed,
             IsEvader = IsEvader
         };

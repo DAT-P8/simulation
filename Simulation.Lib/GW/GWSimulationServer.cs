@@ -1,6 +1,7 @@
 using Grpc.Core;
 using GWSimulation;
 using Serilog;
+using Simulation.GridEnvironment;
 
 namespace Simulation.Lib.GW;
 
@@ -9,13 +10,16 @@ public class GWSimulationServer : GWSimulation.GWSimulation.GWSimulationBase, ID
     private readonly Dictionary<long, SimulationDatetime> _simulations = [];
     private readonly ILogger _logger;
     private readonly IGWSimulationFactory _simulationFactory;
+    private readonly IGWWorldGenerator _worldGenerator;
     private readonly SemaphoreSlim _simulationSemaphore = new(1);
     private readonly Timer _timer;
+    private bool mapGenerated = false;
 
-    public GWSimulationServer(IGWSimulationFactory simulationFactory, ILogger logger)
+    public GWSimulationServer(IGWSimulationFactory simulationFactory, IGWWorldGenerator worldGenerator, ILogger logger)
     {
         _logger = logger;
         _simulationFactory = simulationFactory;
+        _worldGenerator = worldGenerator;
         _timer = new Timer(CheckCleanup, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
     }
 
@@ -76,6 +80,19 @@ public class GWSimulationServer : GWSimulation.GWSimulation.GWSimulationBase, ID
 
     public override async Task<GWNewResponse> New(GWNewRequest request, ServerCallContext context)
     {
+        int mapSize = request.MapSize;
+        int targetX = request.TargetX;
+        int targetY = request.TargetY;
+        GWEnvData envData = new (mapSize, targetX, targetY);
+        
+        if (!mapGenerated){
+            await _worldGenerator.GenerateWorld(envData);
+            mapGenerated = true;
+        }
+
+        int timeLimit = request.TimeLimit;
+        await _simulationFactory.SpecifySimulation(envData, timeLimit);
+
         var newSim = await _simulationFactory.CreateSimulation();
 
         long id;

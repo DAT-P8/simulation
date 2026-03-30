@@ -10,7 +10,7 @@ using Simulation.Lib.GW;
 
 namespace Simulation.GridEnvironment;
 
-public class GWSim(ILogger logger, GWEnvData envdata) : IGWSimulation
+public class GWSim(ILogger logger, int timeLimit, GWEnvData envdata) : IGWSimulation
 {
     private readonly long Defender1Id = 0;
     private readonly long Defender2Id = 1;
@@ -22,7 +22,8 @@ public class GWSim(ILogger logger, GWEnvData envdata) : IGWSimulation
     private readonly Dictionary<long, GWDrone> _drones = [];
     private readonly object _droneLock = new();
 
-    private bool _isTerminated = false;
+    private SimStates _simState = SimStates.Running;
+    private int timeStep = 0;
 
     public Task Close()
     {
@@ -32,10 +33,8 @@ public class GWSim(ILogger logger, GWEnvData envdata) : IGWSimulation
 
     public Task<GWState> DoStep(List<GWDroneAction> actions)
     {
-        if (_isTerminated)
-        {
+        if (_simState != SimStates.Running)
             return Task.FromResult(GetState());
-        }
 
         foreach (var droneAction in actions)
         {
@@ -80,21 +79,23 @@ public class GWSim(ILogger logger, GWEnvData envdata) : IGWSimulation
                 drone.Destroyed = true;
 
             // Defender drones are not allowed in the target area.
-            if (!drone.IsEvader && envdata.IsInTarget((newX, newZ)))
+            if (!drone.IsEvader && envdata.IsInTarget(newX, newZ))
                 continue;
 
-            drone.SetPosition(new GWPosition(newX, 0, newZ));
+            drone.SetPosition(new GWPosition(newX, 0, newZ, envdata));
         }
 
         // Any evader reaches target
-        _isTerminated = _drones.Any(e => envdata.IsInTarget((e.Value.X, e.Value.Z))  && e.Value.IsEvader);
-        if (_isTerminated)
+        if (_drones.Any(e => envdata.IsInTarget(e.Value.X, e.Value.Z) && e.Value.IsEvader)){
+            _simState = SimStates.TargetReached;
             return Task.FromResult(GetState());
-
+        }
+        
         // All evaders are out of bounds
-        _isTerminated = _drones.All(e => !e.Value.IsEvader || !IsInBounds(e.Value.X, e.Value.Z));
-        if (_isTerminated)
+        if (_drones.All(e => !e.Value.IsEvader || !IsInBounds(e.Value.X, e.Value.Z))){
+            _simState = SimStates.EvadersCrashed;
             return Task.FromResult(GetState());
+        }
 
         var colliding_drones = _drones
             .Where(d1 =>
@@ -105,20 +106,27 @@ public class GWSim(ILogger logger, GWEnvData envdata) : IGWSimulation
                     !d1.Value.Destroyed &&
                     !d2.Value.Destroyed
                 ))
-            .Select(e => e.Value)
-            .ToList();
+            .Select(e => e.Value.Destroyed = true);
 
-        foreach (var drone in colliding_drones)
-            drone.Destroyed = true;
+        // All evaders are destroyed (captured?)
+        if(_drones.All(e => !e.Value.IsEvader || e.Value.Destroyed)){
+            _simState = SimStates.EvadersCaptured;
+            return Task.FromResult(GetState());
+        }
+        
+        timeStep++;
 
-        // All evaders are destroyed
-        _isTerminated = _drones.All(e => !e.Value.IsEvader || e.Value.Destroyed);
+        // The simulation has run for the specified number of steps
+        if (timeStep >= timeLimit)
+            _simState = SimStates.TimeExceeded;
         return Task.FromResult(GetState());
+
+        // Possible todo: add logic for checking if all pursuers has collided/crashed
     }
 
     public Task<GWState> Reset()
     {
-        _isTerminated = false;
+        _simState = SimStates.Running;
 
         if (_drones.Count > 0)
         {
@@ -166,18 +174,19 @@ public class GWSim(ILogger logger, GWEnvData envdata) : IGWSimulation
 
         var lower = (1 & random.Next()) == 1;
         var left = (1 & random.Next()) == 1;
-        var rand = envdata.ApplyOffset(random.Next(-envdata.GetHalfSize, envdata.GetHalfSize));
+        var rand = random.Next(-envdata.GetHalfSize, envdata.GetHalfSize);
 
-        GWPosition defender_drone_1 = new(envdata.ApplyOffset(1), 0, envdata.ApplyOffset(0));
-        GWPosition defender_drone_2 = new(envdata.ApplyOffset(0), 0, envdata.ApplyOffset(1));
+        (int targetX, int targetY) = envdata.GetTargetPosition;
+        GWPosition defender_drone_1 = new(targetX + 1, 0, targetY, envdata);
+        GWPosition defender_drone_2 = new(targetX, 0, targetY + 1, envdata);
 
         GWPosition evader_position;
         if (lower)
-            evader_position = new(!left ? rand : envdata.ApplyOffset(envdata.GetHalfSize), 0, left ? rand : -envdata.ApplyOffset(envdata.GetHalfSize));
+            evader_position = new(!left ? rand: envdata.GetHalfSize, 0, left ? rand : -envdata.GetHalfSize, envdata);
         else
-            evader_position = new(!left ? rand : envdata.ApplyOffset(envdata.GetHalfSize), 0, left ? rand : envdata.ApplyOffset(envdata.GetHalfSize));
+            evader_position = new(!left ? rand: envdata.GetHalfSize, 0, left ? rand : envdata.GetHalfSize, envdata);
 
-        GWPosition evader_drone = evader_position; //Possble off by 1 error here
+        GWPosition evader_drone = evader_position;
 
         return new Positions
         {
@@ -203,10 +212,25 @@ public class GWSim(ILogger logger, GWEnvData envdata) : IGWSimulation
 
     private GWState GetState()
     {
+        /*
+         * Drone state
+            * id
+            * Postion 
+            * Crashed/OoB - destroyed
+            * IsEvader
+         * Obstacles and border
+         * Target position
+         * Termination type
+            * Evader captured
+            * Evader crashed
+            * Pursuers crashed
+            * Time limit? - Could be included in request message
+        * Map size should be set same place as time limit (likely python) 
+        */
         return new GWState
         {
             DroneStates = { _drones.Select(e => e.Value.GetState()) },
-            Terminated = _isTerminated,
+            SimulationState = _simState,
         };
     }
 
@@ -221,9 +245,11 @@ public class GWSim(ILogger logger, GWEnvData envdata) : IGWSimulation
         }
     }
 
-    private bool IsInBounds(float x, float z)
+    private bool IsInBounds(int x, int z)
     {
-        //Offset shouldn't need to be applied since drones move further than the offset
-        return -envdata.GetHalfSize <= x && x <= envdata.GetHalfSize && -envdata.GetHalfSize <= z && z <= envdata.GetHalfSize;
+        return -envdata.GetHalfSize <= x 
+                && x <= envdata.GetHalfSize 
+                && -envdata.GetHalfSize <= z 
+                && z <= envdata.GetHalfSize;
     }
 }

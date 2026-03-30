@@ -10,6 +10,7 @@ public class Server(
     string host,
     int port,
     IGWSimulationFactory gwSimulationFactory,
+    IGWWorldGenerator gwWorldGenerator,
     ITDFSimulationFactory tdfSimulationFactory
 )
 {
@@ -17,11 +18,12 @@ public class Server(
     private readonly string _host = host;
     private readonly int _port = port;
     private readonly IGWSimulationFactory _gwSimulationFactory = gwSimulationFactory;
+    private readonly IGWWorldGenerator _gwWorldGenerator = gwWorldGenerator;
     private readonly ITDFSimulationFactory _tdfSimulationFactory = tdfSimulationFactory;
 
     public void StartServer()
     {
-        var gwService = new GWSimulationServer(_gwSimulationFactory, _logger);
+        var gwService = new GWSimulationServer(_gwSimulationFactory, _gwWorldGenerator, _logger);
         var gwLoggingDecorator = new GWLoggingDecorator(gwService, _logger);
         var gwErrorDecorator = new GWErrorDecorator(gwLoggingDecorator, _logger);
 

@@ -1,15 +1,27 @@
 using System;
+using System.Threading.Tasks;
 using Godot;
+using Simulation.Lib.GW;
 
 namespace Simulation.GridEnvironment
 {
-	public class GWMap(GWEnvData envData)
+	public class GWMap() : IGWWorldGenerator
 	{
 		// The number of pixels in the tiles' texture 
 		private const int tileSize = 16;
-		private int mapSize = envData.GetMapSize;
 
-		public MeshInstance3D ConstructMap(SubViewport mapTexture)
+        public Task GenerateWorld(GWEnvData envData){
+			//Size of map with room for visible borders
+            int mapSize = envData.GetMapSize + 2;
+            (int,int) target = envData.GetTargetPosition;
+
+            var view = GenerateTexture(mapSize, target);
+            Main.MainScene.CallDeferred(Node.MethodName.AddChild, view);
+            Main.MainScene.CallDeferred(Node.MethodName.AddChild, ConstructMap(view, mapSize));
+            return Task.CompletedTask;
+        }
+
+		private static MeshInstance3D ConstructMap(SubViewport mapTexture, int mapSize)
 		{
 			Vector2I mapDim = new(mapSize, mapSize);
 			StandardMaterial3D material = new();
@@ -26,11 +38,8 @@ namespace Simulation.GridEnvironment
 			return mesh3d;
 		}
 
-		public SubViewport GenerateTexture()
+		private static SubViewport GenerateTexture(int mapSize, (int,int) target)
 		{
-			//Add room for visible map borders
-			mapSize += 2;
-
 			//(map size + 2 borders) * tile size
 			Vector2I textureDim = new(mapSize * tileSize, mapSize * tileSize);
 
@@ -40,7 +49,6 @@ namespace Simulation.GridEnvironment
 			TileMapLayer tileMap = GenerateTilemapLayer();
 
 			//Draw a square map with borders
-			(int,int) target = ToTilemapPos(envData.GetTargetPosition);
 			for (int i = 0; i < mapSize; i++)
 			{
 				for (int j = 0; j < mapSize; j++)
@@ -58,6 +66,7 @@ namespace Simulation.GridEnvironment
 			return mapTexture;
 		}
 
+        /// Converts a picture to a tilemap
 		private static TileMapLayer GenerateTilemapLayer()
 		{
 			Texture2D textureSource = GD.Load<Texture2D>("res://Textures/Simple-tilemap.png");
@@ -83,10 +92,16 @@ namespace Simulation.GridEnvironment
 
 			return tilemap;
 		}
-
-		private Func<(float,float),(int,int)> ToTilemapPos => pos => (
-		               (int)Math.Ceiling(pos.Item1) + (mapSize/2),
-		               (int)Math.Ceiling(pos.Item2) + (mapSize/2)
-		       );
 	}
 }
+
+
+// private Func<(float,float),(int,int)> ToTilemapPos => pos => (
+//                (int)Math.Ceiling(pos.Item1) + (mapSize/2),
+//                (int)Math.Ceiling(pos.Item2) + (mapSize/2)
+//        );
+// GWEnvData envData = gwFactory.GetEnvData();
+// var world = new GWMap(envData);
+// var view = world.GenerateTexture();
+// AddChild(view);
+// AddChild(world.ConstructMap(view));

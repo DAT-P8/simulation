@@ -2,6 +2,7 @@ using System;
 using Godot;
 using Serilog;
 using Simulation.GridEnvironment;
+using Simulation.GridEnvironment.GridMaps;
 using Serilog.Events;
 using Simulation.Lib;
 using Simulation.TDF;
@@ -29,12 +30,15 @@ public partial class Main : Node3D
             .CreateLogger();
         Log.Logger = logger;
 
-        var gwFactory = new GWSimulationFactory();
+        GWBoxEnvData envData = new(11, 6, 6); //1-mapsize
+        var camera = GetViewport().GetCamera3D();
+        Vector3 new_position = envData.GetMapPosition();
+        new_position.Y = 10;
+        camera.SetPosition(new_position);
+        GWSquareMap.GenerateWorld(envData);
+
+        var gwFactory = new GWSimulationFactory(envData);
         var tdfFactory = new TDFSimulationFactory();
-        var world = new GWMap(10);
-        var view = world.GenerateTexture();
-        AddChild(view);
-        AddChild(world.ConstructMap(view));
 
         var server = new Server(logger, "localhost", 50051, gwFactory, tdfFactory);
         server.StartServer();

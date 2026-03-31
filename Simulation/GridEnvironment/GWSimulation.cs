@@ -1,16 +1,15 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
-using GWSimulation;
+using GW2D.V1;
 using Serilog;
-using Simulation.Lib;
 using Simulation.Lib.GW;
+using Simulation.GridEnvironment.GridMaps;
 
 namespace Simulation.GridEnvironment;
 
-public class GWSim(ILogger logger) : IGWSimulation
+public class GWSim(ILogger logger, IGWEnvData envData) : IGWSimulation
 {
     private readonly long Defender1Id = 0;
     private readonly long Defender2Id = 1;
@@ -24,6 +23,7 @@ public class GWSim(ILogger logger) : IGWSimulation
 
     private bool _isTerminated = false;
 
+    private readonly IGWEnvData envData = envData;
 
     public Task Close()
     {
@@ -31,7 +31,7 @@ public class GWSim(ILogger logger) : IGWSimulation
         return Task.CompletedTask;
     }
 
-    public Task<GWState> DoStep(List<GWDroneAction> actions)
+    public Task<State> DoStep(List<DroneAction> actions)
     {
         if (_isTerminated)
         {
@@ -53,18 +53,18 @@ public class GWSim(ILogger logger) : IGWSimulation
 
             var x_diff = action switch
             {
-                GWAction.Left => -1,
-                GWAction.Right => 1,
+                GW2D.V1.Action.Left => -1,
+                GW2D.V1.Action.Right => 1,
                 _ => 0,
             };
             var z_diff = action switch
             {
-                GWAction.Up => 1,
-                GWAction.Down => -1,
+                GW2D.V1.Action.Up => 1,
+                GW2D.V1.Action.Down => -1,
                 _ => 0,
             };
 
-            if (x_diff == 0 && z_diff == 0 && action != GWAction.Nothing)
+            if (x_diff == 0 && z_diff == 0 && action != GW2D.V1.Action.Nothing)
             {
                 _logger.Error("Did not recognize action {Action}", action);
                 continue;
@@ -77,18 +77,18 @@ public class GWSim(ILogger logger) : IGWSimulation
             var newX = x_pos + x_diff;
             var newZ = z_pos + z_diff;
 
-            if (!IsInBounds(newX, newZ))
+            if (!envData.IsInBounds(newX, newZ))
                 drone.Destroyed = true;
 
             // Defender drones are not allowed in the target area.
-            if (!drone.IsEvader && newX == 5 && newZ == 5)
+            if (!drone.IsEvader && envData.IsInTarget(newX, newZ))
                 continue;
 
             drone.SetPosition(new GWPosition(newX, 0, newZ));
         }
 
         // Any evader reaches target (5, 5)
-        _isTerminated = _drones.Any(e => e.Value.X == 5 && e.Value.Z == 5 && e.Value.IsEvader);
+        _isTerminated = _drones.Any(e => envData.IsInTarget(e.Value.X, e.Value.Z) && e.Value.IsEvader);
         if (_isTerminated)
             return Task.FromResult(GetState());
 
@@ -117,7 +117,7 @@ public class GWSim(ILogger logger) : IGWSimulation
         return Task.FromResult(GetState());
     }
 
-    public Task<GWState> Reset()
+    public Task<State> Reset()
     {
         _isTerminated = false;
 
@@ -127,7 +127,7 @@ public class GWSim(ILogger logger) : IGWSimulation
             var defender_drone_2 = _drones[Defender2Id];
             var evader_drone = _drones[EvaderId];
 
-            var positions = GetInitialPositions();
+            var positions = GetInitialPositions(envData);
 
             defender_drone_1.SetPosition(positions.Defender1);
             defender_drone_2.SetPosition(positions.Defender2);
@@ -161,30 +161,16 @@ public class GWSim(ILogger logger) : IGWSimulation
         public required GWPosition Evader;
     }
 
-    private static Positions GetInitialPositions()
+    private static Positions GetInitialPositions(IGWEnvData envData)
     {
-        Random random = new();
-
-        var lower = (1 & random.Next()) == 1;
-        var left = (1 & random.Next()) == 1;
-        var rand = random.Next(0, 11);
-
-        GWPosition defender_drone_1 = new(6, 0, 5);
-        GWPosition defender_drone_2 = new(5, 0, 6);
-
-        GWPosition evader_position;
-        if (lower)
-            evader_position = new(!left ? rand : 0, 0, left ? rand : 0);
-        else
-            evader_position = new(!left ? rand : 10, 0, left ? rand : 10);
-
-        GWPosition evader_drone = evader_position;
+        GWPosition[] pursuerSpawns = envData.GetPursuerSpawns(2);
+        GWPosition[] evaderSpawns = envData.GetEvaderSpawns(1);
 
         return new Positions
         {
-            Defender1 = defender_drone_1,
-            Defender2 = defender_drone_2,
-            Evader = evader_drone
+            Defender1 = pursuerSpawns[0],
+            Defender2 = pursuerSpawns[1],
+            Evader = evaderSpawns[0]
         };
     }
 
@@ -194,7 +180,7 @@ public class GWSim(ILogger logger) : IGWSimulation
         var defender_drone_2 = new GWDrone(_droneScene.Instantiate<StaticBody3D>(), Defender2Id, false);
         var evader_drone = new GWDrone(_droneEvaderScene.Instantiate<StaticBody3D>(), EvaderId, true);
 
-        var positions = GetInitialPositions();
+        var positions = GetInitialPositions(envData);
         defender_drone_1.SetPosition(positions.Defender1);
         defender_drone_2.SetPosition(positions.Defender2);
         evader_drone.SetPosition(positions.Evader);
@@ -202,12 +188,12 @@ public class GWSim(ILogger logger) : IGWSimulation
         return [defender_drone_1, defender_drone_2, evader_drone];
     }
 
-    private GWState GetState()
+    private State GetState()
     {
-        return new GWState
+        return new State
         {
             DroneStates = { _drones.Select(e => e.Value.GetState()) },
-            Terminated = _isTerminated,
+            //Terminated = _isTerminated,
         };
     }
 

@@ -32,7 +32,7 @@ public class Server(
         var server = new Grpc.Core.Server
         {
             Services = {
-                GWSimulation.GWSimulation.BindService(gwErrorDecorator),
+                GW2D.V1.SimulationService.BindService(gwErrorDecorator),
                 TDFSimulation.TDFSimulation.BindService(tdfErrorDecorator)
             },
             Ports = { new ServerPort(_host, _port, ServerCredentials.Insecure) }

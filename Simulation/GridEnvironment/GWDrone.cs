@@ -1,5 +1,5 @@
 using Godot;
-using GWSimulation;
+using GW2D.V1;
 
 namespace Simulation.GridEnvironment;
 
@@ -28,14 +28,14 @@ public class GWDrone(StaticBody3D staticBody3D, long id, bool isEvader)
         _y = position.Y;
         _z = position.Z;
 
-        StaticBody3D.CallDeferred(Node3D.MethodName.SetPosition, new Vector3(position.X, position.Y, position.Z));
+        StaticBody3D.CallDeferred(Node3D.MethodName.SetPosition, position.ToVector());
     }
 
     public GWPosition GetPosition() => new(_x, _y, _z);
 
-    public GWDroneState GetState()
+    public DroneState GetState()
     {
-        return new GWDroneState
+        return new DroneState
         {
             Id = _id,
             X = _x,

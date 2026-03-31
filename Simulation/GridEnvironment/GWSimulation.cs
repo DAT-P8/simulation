@@ -11,7 +11,7 @@ using Simulation.GridEnvironment.GridMaps;
 
 namespace Simulation.GridEnvironment;
 
-public class GWSim(ILogger logger, GWBoxEnvData envData) : IGWSimulation
+public class GWSim(ILogger logger, IGWEnvData envData) : IGWSimulation
 {
     private readonly long Defender1Id = 0;
     private readonly long Defender2Id = 1;
@@ -25,7 +25,7 @@ public class GWSim(ILogger logger, GWBoxEnvData envData) : IGWSimulation
 
     private bool _isTerminated = false;
 
-    private readonly GWBoxEnvData envData = envData;
+    private readonly IGWEnvData envData = envData;
 
     public Task Close()
     {
@@ -129,7 +129,7 @@ public class GWSim(ILogger logger, GWBoxEnvData envData) : IGWSimulation
             var defender_drone_2 = _drones[Defender2Id];
             var evader_drone = _drones[EvaderId];
 
-            var positions = GetInitialPositions(envData.GetMapSize);
+            var positions = GetInitialPositions(envData);
 
             defender_drone_1.SetPosition(positions.Defender1);
             defender_drone_2.SetPosition(positions.Defender2);
@@ -163,30 +163,16 @@ public class GWSim(ILogger logger, GWBoxEnvData envData) : IGWSimulation
         public required GWPosition Evader;
     }
 
-    private static Positions GetInitialPositions(int mapSize)
+    private static Positions GetInitialPositions(IGWEnvData envData)
     {
-        Random random = new();
-
-        var lower = (1 & random.Next()) == 1;
-        var left = (1 & random.Next()) == 1;
-        var rand = random.Next(0, mapSize);
-
-        GWPosition defender_drone_1 = new(6, 0, 5);
-        GWPosition defender_drone_2 = new(5, 0, 6);
-
-        GWPosition evader_position;
-        if (lower)
-            evader_position = new(!left ? rand : 0, 0, left ? rand : 0);
-        else
-            evader_position = new(!left ? rand : mapSize, 0, left ? rand : mapSize);
-
-        GWPosition evader_drone = evader_position;
+        GWPosition[] pursuerSpawns = envData.GetPursuerSpawns(2);
+        GWPosition[] evaderSpawns = envData.GetEvaderSpawns(1);
 
         return new Positions
         {
-            Defender1 = defender_drone_1,
-            Defender2 = defender_drone_2,
-            Evader = evader_drone
+            Defender1 = pursuerSpawns[0],
+            Defender2 = pursuerSpawns[1],
+            Evader = evaderSpawns[0]
         };
     }
 
@@ -196,7 +182,7 @@ public class GWSim(ILogger logger, GWBoxEnvData envData) : IGWSimulation
         var defender_drone_2 = new GWDrone(_droneScene.Instantiate<StaticBody3D>(), Defender2Id, false);
         var evader_drone = new GWDrone(_droneEvaderScene.Instantiate<StaticBody3D>(), EvaderId, true);
 
-        var positions = GetInitialPositions(envData.GetMapSize);
+        var positions = GetInitialPositions(envData);
         defender_drone_1.SetPosition(positions.Defender1);
         defender_drone_2.SetPosition(positions.Defender2);
         evader_drone.SetPosition(positions.Evader);
@@ -209,7 +195,7 @@ public class GWSim(ILogger logger, GWBoxEnvData envData) : IGWSimulation
         return new GWState
         {
             DroneStates = { _drones.Select(e => e.Value.GetState()) },
-            Terminated = _isTerminated,
+            //Terminated = _isTerminated,
         };
     }
 

@@ -5,7 +5,7 @@ using Simulation.GridEnvironment.GridMaps;
 
 namespace Simulation.GridEnvironment;
 
-public class GWSimulationFactory(GWBoxEnvData envData) : IGWSimulationFactory
+public class GWSimulationFactory(IGWEnvData envData) : IGWSimulationFactory
 {
     public Task<IGWSimulation> CreateSimulation()
     {

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Godot;
 
 namespace Simulation.GridEnvironment.GridMaps;
@@ -27,5 +28,57 @@ public class GWBoxEnvData(int mapSize, int targetX, int targetY) : IGWEnvData
     public bool IsInBounds(int x, int y)
     {
         return x == targetX && y == targetY;
+    }
+    public GWPosition[] GetEvaderSpawns(int nEvaders)
+    {
+        Random random = new();
+
+        GWPosition[] positions = new GWPosition[nEvaders];
+        (bool, bool, int)[] usedPositions = [];
+        for (int i = 0; i < nEvaders; i++)
+        {
+            bool lower, left;
+            int rand;
+            do
+            {
+                lower = (1 & random.Next()) == 1;
+                left = (1 & random.Next()) == 1;
+                rand = random.Next(0, mapSize);
+            } while (!usedPositions.Contains((lower, left, rand)));
+
+            GWPosition evader_position;
+            if (lower)
+                evader_position = new(!left ? rand : 0, 0, left ? rand : 0);
+            else
+                evader_position = new(!left ? rand : mapSize, 0, left ? rand : mapSize);
+
+            positions[i] = evader_position;
+        }
+
+        return positions;
+    }
+    public GWPosition[] GetPursuerSpawns(int nPursuers)
+    {
+        Random random = new();
+
+        GWPosition[] positions = new GWPosition[nPursuers];
+        (int, int)[] usedPositions = [];
+        for (int i = 0; i < nPursuers; i++)
+        {
+            int randX, randY;
+            do
+            {
+                randX = random.Next(-1, 1);
+                randY = random.Next(-1, 1);
+                if (randX == 0 && randY == 0) // Drones cannot spawn on the target
+                    continue;
+            } while (!usedPositions.Contains((randX, randY)));
+
+            GWPosition pusuer_position = new(targetX + randX, 0, targetY + randY);
+
+            positions[i] = pusuer_position;
+        }
+
+        return positions;
     }
 }

@@ -1,11 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Godot;
-using GWSimulation;
+using GW2D.V1;
 using Serilog;
-using Simulation.Lib;
 using Simulation.Lib.GW;
 using Simulation.GridEnvironment.GridMaps;
 
@@ -33,7 +31,7 @@ public class GWSim(ILogger logger, IGWEnvData envData) : IGWSimulation
         return Task.CompletedTask;
     }
 
-    public Task<GWState> DoStep(List<GWDroneAction> actions)
+    public Task<State> DoStep(List<DroneAction> actions)
     {
         if (_isTerminated)
         {
@@ -55,18 +53,18 @@ public class GWSim(ILogger logger, IGWEnvData envData) : IGWSimulation
 
             var x_diff = action switch
             {
-                GWAction.Left => -1,
-                GWAction.Right => 1,
+                GW2D.V1.Action.Left => -1,
+                GW2D.V1.Action.Right => 1,
                 _ => 0,
             };
             var z_diff = action switch
             {
-                GWAction.Up => 1,
-                GWAction.Down => -1,
+                GW2D.V1.Action.Up => 1,
+                GW2D.V1.Action.Down => -1,
                 _ => 0,
             };
 
-            if (x_diff == 0 && z_diff == 0 && action != GWAction.Nothing)
+            if (x_diff == 0 && z_diff == 0 && action != GW2D.V1.Action.Nothing)
             {
                 _logger.Error("Did not recognize action {Action}", action);
                 continue;
@@ -119,7 +117,7 @@ public class GWSim(ILogger logger, IGWEnvData envData) : IGWSimulation
         return Task.FromResult(GetState());
     }
 
-    public Task<GWState> Reset()
+    public Task<State> Reset()
     {
         _isTerminated = false;
 
@@ -190,9 +188,9 @@ public class GWSim(ILogger logger, IGWEnvData envData) : IGWSimulation
         return [defender_drone_1, defender_drone_2, evader_drone];
     }
 
-    private GWState GetState()
+    private State GetState()
     {
-        return new GWState
+        return new State
         {
             DroneStates = { _drones.Select(e => e.Value.GetState()) },
             //Terminated = _isTerminated,

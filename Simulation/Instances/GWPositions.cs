@@ -1,6 +1,6 @@
 using Godot;
 
-namespace Simulation.GridEnvironment;
+namespace Simulation.Instances;
 
 public record GWPosition(int X, int Y, int Z)
 {

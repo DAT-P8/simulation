@@ -11,11 +11,11 @@ public class GWErrorDecorator(
     private readonly ILogger _logger = logger;
     private readonly SimulationService.SimulationServiceBase _inner = inner;
 
-    public override Task<CloseResponse> Close(CloseRequest request, Grpc.Core.ServerCallContext context)
+    public override async Task<CloseResponse> Close(CloseRequest request, Grpc.Core.ServerCallContext context)
     {
         try
         {
-            return _inner.Close(request, context);
+            return await _inner.Close(request, context);
         }
         catch (Exception e)
         {
@@ -24,11 +24,11 @@ public class GWErrorDecorator(
         }
     }
 
-    public override Task<DoStepResponse> DoStep(DoStepRequest request, Grpc.Core.ServerCallContext context)
+    public override async Task<DoStepResponse> DoStep(DoStepRequest request, Grpc.Core.ServerCallContext context)
     {
         try
         {
-            return _inner.DoStep(request, context);
+            return await _inner.DoStep(request, context);
         }
         catch (Exception e)
         {
@@ -37,11 +37,11 @@ public class GWErrorDecorator(
         }
     }
 
-    public override Task<NewResponse> New(NewRequest request, Grpc.Core.ServerCallContext context)
+    public override async Task<NewResponse> New(NewRequest request, Grpc.Core.ServerCallContext context)
     {
         try
         {
-            return _inner.New(request, context);
+            return await _inner.New(request, context);
         }
         catch (Exception e)
         {
@@ -50,11 +50,11 @@ public class GWErrorDecorator(
         }
     }
 
-    public override Task<ResetResponse> Reset(ResetRequest request, Grpc.Core.ServerCallContext context)
+    public override async Task<ResetResponse> Reset(ResetRequest request, Grpc.Core.ServerCallContext context)
     {
         try
         {
-            return _inner.Reset(request, context);
+            return await _inner.Reset(request, context);
         }
         catch (Exception e)
         {

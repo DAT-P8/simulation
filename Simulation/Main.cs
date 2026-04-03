@@ -6,6 +6,7 @@ using Simulation.GridEnvironment.GridMaps;
 using Serilog.Events;
 using Simulation.Lib;
 using Simulation.TDF;
+using Autofac;
 
 namespace Simulation;
 
@@ -40,7 +41,19 @@ public partial class Main : Node3D
         var gwFactory = new GWSimulationFactory(envData);
         var tdfFactory = new TDFSimulationFactory();
 
-        var server = new Server(logger, "localhost", 50051, gwFactory, tdfFactory);
+        var serverModule = new ServerModule(
+            gwFactory,
+            tdfFactory,
+            logger,
+            "localhost",
+            50051
+        );
+
+        var builder = new ContainerBuilder();
+        builder.RegisterModule(serverModule);
+        var container = builder.Build();
+
+        var server = container.Resolve<Server>();
         server.StartServer();
     }
 

@@ -99,15 +99,18 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
         await _simulationSemaphore.WaitAsync();
         try
         {
+            _logger.Information("Got semaphore successfully");
             id = GetNewId();
             _simulations.Add(id, new SimulationDatetime(newSim, DateTime.UtcNow));
         }
         finally
         {
             _simulationSemaphore.Release();
+            _logger.Information("Released semaphore successfully");
         }
 
         var state = await newSim.Reset();
+        _logger.Information("Called new successfully");
         return new NewResponse
         {
             StateResponse = new StateResponse

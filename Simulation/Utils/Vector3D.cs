@@ -172,7 +172,7 @@ public static class VectorExtensions
             Math.Abs(v1.Y - v2.Y) < epsilon &&
             Math.Abs(v1.Z - v2.Z) < epsilon;
     }
-    
+
     public static List<(Vector3D<float>, int, int)> SweepTests(List<Vector3D<float>> before, List<Vector3D<float>> after)
     {
         var orderedPairs = before.Zip(after).Select((e, i) =>

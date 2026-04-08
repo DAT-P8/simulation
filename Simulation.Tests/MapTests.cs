@@ -35,9 +35,9 @@ public class MapTests
         };
 
         Assert.True(_positionUtility.IsInBounds(mapSpec, new(0, 0, 0)));
-        
+
         Assert.True(_positionUtility.IsInBounds(mapSpec, new(9, 0, 9)));
-        
+
         Assert.True(!_positionUtility.IsInBounds(mapSpec, new(0, 0, 10)));
 
         Assert.True(!_positionUtility.IsInBounds(mapSpec, new(10, 0, 0)));

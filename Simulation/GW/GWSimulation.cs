@@ -167,7 +167,7 @@ public class GWSimulationInstance(
 
         var collisionEvents = collisions.Select(e => new Event { CollisionEvent = e }).ToList();
         var outOfBoundsEvent = new Event { OutOfBoundsEvent = outOfBounds };
-        return Task.FromResult(GetState([..collisionEvents, outOfBoundsEvent]));
+        return Task.FromResult(GetState([.. collisionEvents, outOfBoundsEvent]));
     }
 
     private OutOfBoundsEvent GetOutOfBounds(List<(long Id, Vector3I, Vector3I)> positions)

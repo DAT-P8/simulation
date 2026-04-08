@@ -97,7 +97,7 @@ public class CollisionTests
     [MemberData(nameof(CollidingPointData))]
     public void TestColliding(List<Vector3D<float>> beforePositions, List<Vector3D<float>> afterPositions)
     {
-        var points = TDF.TDFSimulation.SweepTests(beforePositions, afterPositions);
+        var points = VectorExtensions.SweepTests(beforePositions, afterPositions);
 
         foreach (var (point, _, _) in points)
             Assert.InRange(point.Dot(point), 0f, 1f);
@@ -107,7 +107,7 @@ public class CollisionTests
     [MemberData(nameof(NonCollidingPointData))]
     public void TestNonColliding(List<Vector3D<float>> beforePositions, List<Vector3D<float>> afterPositions)
     {
-        var points = TDF.TDFSimulation.SweepTests(beforePositions, afterPositions);
+        var points = VectorExtensions.SweepTests(beforePositions, afterPositions);
 
         foreach (var (point, _, _) in points)
             Assert.NotInRange(point.Dot(point), 0f, 1f);

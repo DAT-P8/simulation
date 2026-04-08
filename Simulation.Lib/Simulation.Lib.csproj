@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Autofac" Version="9.1.0" />
     <PackageReference Include="Google.Protobuf" Version="3.33.5" />
     <PackageReference Include="Grpc.Core" Version="2.46.6" />
     <PackageReference Include="Grpc.Tools" Version="2.78.0">
@@ -21,8 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="../Protos/main.proto" />
-    <Protobuf Include="../Protos/grid_world.proto" />
+    <Protobuf Include="../Protos/ngw/v1/ngw2d.proto" />
     <Protobuf Include="../Protos/TDF.proto" />
   </ItemGroup>
 </Project>

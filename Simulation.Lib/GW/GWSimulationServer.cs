@@ -101,7 +101,6 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
         await _simulationSemaphore.WaitAsync();
         try
         {
-            _logger.Information("Got semaphore successfully");
             id = GetNewId();
             newSim = await _simulationFactory.CreateSimulation(id);
             _simulations.Add(id, new SimulationDatetime(newSim, DateTime.UtcNow));
@@ -109,7 +108,6 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
         finally
         {
             _simulationSemaphore.Release();
-            _logger.Information("Released semaphore successfully");
         }
 
         var state = await newSim.New(
@@ -119,7 +117,6 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
             (int)request.DroneVelocity
         );
 
-        _logger.Information("Called new successfully!");
         return new NewResponse
         {
             StateResponse = new StateResponse

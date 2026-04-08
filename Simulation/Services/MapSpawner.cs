@@ -37,7 +37,6 @@ public class MapSpawner(ILogger logger, ICameraController cameraController) : IM
 
         if (_squareMaps[sqmap] == 1)
         {
-            _logger.Information("Creating new GW map!");
             for (int x = -1; x <= sqmap.Width; x++)
             {
                 for (int y = -1; y <= sqmap.Height; y++)
@@ -51,7 +50,6 @@ public class MapSpawner(ILogger logger, ICameraController cameraController) : IM
                         tile = _greenTile.Instantiate<Node3D>();
 
                     Main.MainScene.CallDeferred(Node.MethodName.AddChild, tile);
-                    _logger.Information("Spawned a tile!");
                     _tiles.Add(tile);
                     tile.CallDeferred(Node3D.MethodName.SetPosition, new Vector3I(x, -1, y));
                 }

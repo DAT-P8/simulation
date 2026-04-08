@@ -51,7 +51,7 @@ public class PositionUtility(Random random, ILogger logger) : IPositionUtility
 
     private bool IsInBounds(SquareMap mapSpec, Vector3I position)
     {
-        return position.X >= 0 && position.Y >= 0 && position.X <= mapSpec.Width - 1 && position.Y <= mapSpec.Height - 1;
+        return position.X >= 0 && position.Z >= 0 && position.X < mapSpec.Width && position.Z < mapSpec.Height;
     }
 
     private Vector3I GetSquareMapAttackerSpawn(SquareMap squareMap)

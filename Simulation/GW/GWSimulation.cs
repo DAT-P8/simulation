@@ -119,77 +119,96 @@ public class GWSimulationInstance(
     public Task<State> DoStep(List<DroneAction> actions)
     {
         var allDrones = _defenders.Concat(_attackers).ToList();
+        var beforePositions = _defenders.Concat(_attackers)
+            .Where(e => !e.Destroyed)
+            .Select(e => (e.Id, e.GetPosition()))
+            .ToList();
 
-        var nonDestroyedDrones = allDrones.Where(e => !e.Destroyed).ToList();
-        // Before positions of non-destroyed drones
-        var beforePositions = nonDestroyedDrones.Select(e => e.GetPosition()).ToList();
-
-        // Move non-destroyed drones
         foreach (var action in actions)
         {
-            var drone = allDrones.FirstOrDefault(d => d.Id == action.Id) ??
-                throw new Exception($"Did not find a drone with id: {action.Id}!");
-
+            var drone = allDrones.FirstOrDefault(e => e.Id == action.Id) ??
+                throw new Exception($"Did not find drone with id: {action.Id}");
             if (drone.Destroyed) continue;
-
-            var vec = DtoMapper.ToVector(action.Action) * (int)action.Velocity;
-            _logger.Information("New position: {NP}", drone.GetPosition() + vec);
-
-            drone.SetPosition(drone.GetPosition() + vec);
+            var resultingPosition = drone.GetPosition() + DtoMapper.ToVector(action.Action) * (int)action.Velocity;
+            drone.SetPosition(resultingPosition);
         }
 
-        // After positions of non-destroyed drones
-        var afterPositions = nonDestroyedDrones.Select(e => e.GetPosition()).ToList();
+        var afterPositions = _defenders.Concat(_attackers)
+            .Where(e => !e.Destroyed)
+            .Select(e => (e.Id, e.GetPosition()))
+            .ToList();
 
-        var possibleCollisions = VectorExtensions.SweepTests(
-            [.. beforePositions.Select(e => new Vector3D<float>(e.X, e.Y, e.Z))],
-            [.. afterPositions.Select(e => new Vector3D<float>(e.X, e.Y, e.Z))]
-        );
+        var zippedPositions = beforePositions
+            .Zip(afterPositions)
+            .Select(e => (e.First.Id, e.First.Item2, e.Second.Item2))
+            .ToList();
 
-        List<(GWDrone, GWDrone)> collisions = [];
-        foreach (var col in possibleCollisions)
+        var collisions = GetCollisions(zippedPositions);
+        var outOfBounds = GetOutOfBounds(zippedPositions);
+
+        foreach (var collision in collisions)
         {
-            var (distanceVector, idx1, idx2) = col;
+            foreach (var id in collision.DroneIds)
+            {
+                var drone = allDrones.FirstOrDefault(e => e.Id == id) ??
+                    throw new Exception($"Detected a collision with a drone that doesn't exist: {id}");
 
-            var distance = distanceVector.Dot(distanceVector);
-            if (distance > 1)
+                drone.Destroyed = true;
+            }
+        }
+
+        foreach (var id in outOfBounds.DroneIds)
+        {
+            var drone = allDrones.FirstOrDefault(e => e.Id == id) ??
+                throw new Exception($"Detected an out of bounds event with a drone that doesn't exist: {id}");
+
+            drone.Destroyed = true;
+        }
+
+        var collisionEvents = collisions.Select(e => new Event { CollisionEvent = e }).ToList();
+        var outOfBoundsEvent = new Event { OutOfBoundsEvent = outOfBounds };
+        return Task.FromResult(GetState([..collisionEvents, outOfBoundsEvent]));
+    }
+
+    private OutOfBoundsEvent GetOutOfBounds(List<(long Id, Vector3I, Vector3I)> positions)
+    {
+        List<long> ids = [];
+        foreach (var position in positions)
+        {
+            var (id, _, after) = position;
+
+            if (_positionUtility.IsInBounds(_mapSpec, after))
                 continue;
 
-            var d1 = nonDestroyedDrones[idx1];
-            var d2 = nonDestroyedDrones[idx2];
-
-            d1.Destroyed = true;
-            d2.Destroyed = true;
-
-            collisions.Add((nonDestroyedDrones[idx1], nonDestroyedDrones[idx2]));
+            ids.Add(id);
         }
-        var collisionEvents = collisions.Select(e => new CollisionEvent { DroneIds = { e.Item1.Id, e.Item2.Id } }).ToList();
 
-        var outOfBoundsDrones = nonDestroyedDrones
-            .Where(e => !_positionUtility.IsInBounds(_mapSpec, e.GetPosition()))
-            .ToList();
-
-        foreach (var d in outOfBoundsDrones)
-            d.Destroyed = true;
-
-        // Filter away drones that have crashed from the out of bounds events
-        var outOfBoundsIds = outOfBoundsDrones
-            .Where(outDrone => !collisionEvents.Any(e => e.DroneIds.Contains(outDrone.Id)))
-            .Select(e => e.Id)
-            .ToList();
-
-        var outOfBoundsEvent = new OutOfBoundsEvent
+        return new OutOfBoundsEvent
         {
-            DroneIds = { outOfBoundsIds }
+            DroneIds = { ids }
         };
+    }
 
-        List<Event> events = [
-            .. collisionEvents
-                .Select(e => new Event { CollisionEvent = e }),
-            new Event { OutOfBoundsEvent = outOfBoundsEvent }
-        ];
+    private List<CollisionEvent> GetCollisions(List<(long Id, Vector3I, Vector3I)> positions)
+    {
+        var before = positions.Select(e => e.Item3).Select(e => new Vector3D<float>(e.X, e.Y, e.Z)).ToList();
+        var after = positions.Select(e => e.Item2).Select(e => new Vector3D<float>(e.X, e.Y, e.Z)).ToList();
 
-        return Task.FromResult(GetState(events));
+        var results = VectorExtensions.SweepTests(before, after);
+
+        List<CollisionEvent> events = [];
+        foreach (var result in results)
+        {
+            var (pointProjection, idx1, idx2) = result;
+            var colEvent = new CollisionEvent
+            {
+                DroneIds = { idx1, idx2 }
+            };
+
+            events.Add(colEvent);
+        }
+
+        return events;
     }
 
     public Task<State> Reset()
@@ -215,8 +234,7 @@ public class GWSimulationInstance(
 
     public State GetState(List<Event> events)
     {
-        bool terminated = _defenders.Concat(_attackers).All(e => e.Destroyed);
-        _logger.Information("Terminated: {T}", terminated);
+        bool terminated = _attackers.All(e => e.Destroyed);
         State state = new()
         {
             Events = { events },

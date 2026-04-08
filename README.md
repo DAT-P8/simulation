@@ -29,6 +29,7 @@ dotnet build
 
 ### 3. Run the Simulation
 
+
 ```bash
 run-simulation
 ```
@@ -58,10 +59,21 @@ dotnet build
 
 ### 3. Run the Simulation
 
-After a successful build, navigate to the `Simulation` directory and launch Godot:
+After a successful build, navigate to the `Simulation` directory:
 
 ```bash
 cd Simulation
+```
+
+The first time runnning the simulation we have to import the assets:
+
+```bash
+godot-mono --headless --import
+```
+
+Then run the simulation:
+
+```bash
 godot-mono
 ```
 

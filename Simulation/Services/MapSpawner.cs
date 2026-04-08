@@ -5,10 +5,11 @@ using Serilog;
 
 namespace Simulation.Services;
 
-public class MapSpawner(ILogger logger) : IMapSpawner
+public class MapSpawner(ILogger logger, ICameraController cameraController) : IMapSpawner
 {
     private readonly Dictionary<RSquareMap, int> _squareMaps = [];
     private readonly ILogger _logger = logger;
+    private readonly ICameraController _cameraController = cameraController;
     private readonly PackedScene _greenTile = GD.Load<PackedScene>("res://green_tile.tscn");
     private readonly PackedScene _greyTile = GD.Load<PackedScene>("res://grey_tile.tscn");
     private readonly PackedScene _redTile = GD.Load<PackedScene>("res://red_tile.tscn");
@@ -49,10 +50,17 @@ public class MapSpawner(ILogger logger) : IMapSpawner
                     else
                         tile = _greenTile.Instantiate<Node3D>();
 
+                    Main.MainScene.CallDeferred(Node.MethodName.AddChild, tile);
+                    _logger.Information("Spawned a tile!");
                     _tiles.Add(tile);
-                    tile.CallDeferred(Node3D.MethodName.SetPosition, new Vector3I(x, y, 0));
+                    tile.CallDeferred(Node3D.MethodName.SetPosition, new Vector3I(x, -1, y));
                 }
             }
+
+            var midY = sqmap.Height / 2f;
+            var midX = sqmap.Width / 2f;
+
+            _cameraController.SetCameraPosition(new(midX, 20, midY));
         }
     }
 

@@ -103,12 +103,14 @@ class SquareMap(_message.Message):
     def __init__(self, width: _Optional[int] = ..., height: _Optional[int] = ..., target_x: _Optional[int] = ..., target_y: _Optional[int] = ...) -> None: ...
 
 class DroneAction(_message.Message):
-    __slots__ = ("id", "action")
+    __slots__ = ("id", "action", "velocity")
     ID_FIELD_NUMBER: _ClassVar[int]
     ACTION_FIELD_NUMBER: _ClassVar[int]
+    VELOCITY_FIELD_NUMBER: _ClassVar[int]
     id: int
     action: Action
-    def __init__(self, id: _Optional[int] = ..., action: _Optional[_Union[Action, str]] = ...) -> None: ...
+    velocity: int
+    def __init__(self, id: _Optional[int] = ..., action: _Optional[_Union[Action, str]] = ..., velocity: _Optional[int] = ...) -> None: ...
 
 class StateResponse(_message.Message):
     __slots__ = ("state", "error_message")

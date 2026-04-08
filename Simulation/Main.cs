@@ -1,12 +1,14 @@
 using System;
 using Godot;
 using Serilog;
-using Simulation.GridEnvironment;
-using Simulation.GridEnvironment.GridMaps;
 using Serilog.Events;
 using Simulation.Lib;
 using Simulation.TDF;
 using Autofac;
+using Simulation.GW;
+using Simulation.Lib.GW;
+using Simulation.Lib.TDF;
+using Simulation.Services;
 
 namespace Simulation;
 
@@ -31,26 +33,8 @@ public partial class Main : Node3D
             .CreateLogger();
         Log.Logger = logger;
 
-        GWBoxEnvData envData = new(11, 6, 6); //1-mapsize
-        var camera = GetViewport().GetCamera3D();
-        Vector3 new_position = envData.GetMapPosition();
-        new_position.Y = 10;
-        camera.SetPosition(new_position);
-        GWSquareMap.GenerateWorld(envData);
-
-        var gwFactory = new GWSimulationFactory(envData);
-        var tdfFactory = new TDFSimulationFactory();
-
-        var serverModule = new ServerModule(
-            gwFactory,
-            tdfFactory,
-            logger,
-            "localhost",
-            50051
-        );
-
         var builder = new ContainerBuilder();
-        builder.RegisterModule(serverModule);
+        builder.RegisterServices(logger, "localhost", 50051, 420);
         var container = builder.Build();
 
         var server = container.Resolve<Server>();

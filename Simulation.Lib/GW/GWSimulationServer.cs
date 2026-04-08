@@ -7,6 +7,7 @@ namespace Simulation.Lib.GW;
 public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisposable
 {
     private readonly Dictionary<long, SimulationDatetime> _simulations = [];
+
     private readonly ILogger _logger;
     private readonly IGWSimulationFactory _simulationFactory;
     private readonly SemaphoreSlim _simulationSemaphore = new(1);
@@ -93,14 +94,16 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
 
     public override async Task<NewResponse> New(NewRequest request, ServerCallContext context)
     {
-        var newSim = await _simulationFactory.CreateSimulation();
+        IGWSimulation newSim;
 
+        // IGWSimulation newSim = await _simulationFactory.CreateSimulation();
         long id;
         await _simulationSemaphore.WaitAsync();
         try
         {
             _logger.Information("Got semaphore successfully");
             id = GetNewId();
+            newSim = await _simulationFactory.CreateSimulation(id);
             _simulations.Add(id, new SimulationDatetime(newSim, DateTime.UtcNow));
         }
         finally
@@ -109,8 +112,14 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
             _logger.Information("Released semaphore successfully");
         }
 
-        var state = await newSim.Reset();
-        _logger.Information("Called new successfully");
+        var state = await newSim.New(
+            request.Map,
+            (int)request.EvaderCount,
+            (int)request.PursuerCount,
+            (int)request.DroneVelocity
+        );
+
+        _logger.Information("Called new successfully!");
         return new NewResponse
         {
             StateResponse = new StateResponse

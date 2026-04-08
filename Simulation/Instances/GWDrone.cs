@@ -1,5 +1,6 @@
 using Godot;
 using GW2D.V1;
+using Serilog;
 
 namespace Simulation.Instances;
 
@@ -22,22 +23,13 @@ public class GWDrone(StaticBody3D staticBody3D, long id, bool isEvader)
     public long Id => _id;
     public bool Destroyed { get; set; }
 
-    public void SetPosition(GWPosition position)
-    {
-        _x = position.X;
-        _y = position.Y;
-        _z = position.Z;
-
-        StaticBody3D.CallDeferred(Node3D.MethodName.SetPosition, position.ToVector());
-    }
-
     public void SetPosition(Vector3I position)
     {
         _x = position.X;
         _y = position.Y;
         _z = position.Z;
 
-        StaticBody3D.CallDeferred(Node3D.MethodName.SetPosition, position);
+        StaticBody3D.CallDeferred(Node3D.MethodName.SetPosition, (Vector3)position);
     }
 
     public Vector3I GetPosition() => new(_x, _y, _z);

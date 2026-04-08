@@ -1,7 +1,17 @@
 import random
+import time
 import grpc
 import logging
 from ngw.v1.ngw2d_pb2 import (
+    ACTION_DOWN,
+    ACTION_LEFT,
+    ACTION_LEFT_DOWN,
+    ACTION_LEFT_UP,
+    ACTION_NOTHING,
+    ACTION_RIGHT,
+    ACTION_RIGHT_DOWN,
+    ACTION_RIGHT_UP,
+    ACTION_UP,
     Action,
     DoStepRequest,
     DoStepResponse,
@@ -28,10 +38,10 @@ class SimulationClient:
         evader_count: int = 10,
         pursuer_count: int = 10,
         drone_velocity: int = 2,
-        width: int = 10,
-        height: int = 10,
-        target_x: int = 5,
-        target_y: int = 5
+        width: int = 3,
+        height: int = 3,
+        target_x: int = 1,
+        target_y: int = 1
     ) -> NewResponse:
         square_map = MapSpec(
             square_map=SquareMap(width=width, height=height, target_x=target_x, target_y=target_y)
@@ -53,11 +63,11 @@ class EndlessRandomSquareSimulation:
     def __init__(
         self,
         chan: Channel,
-        evader_count: int = 10,
-        pursuer_count: int = 10,
+        evader_count: int = 2,
+        pursuer_count: int = 2,
         drone_velocity: int = 2,
-        width: int = 10,
-        height: int = 10,
+        width: int = 11,
+        height: int = 11,
         target_x: int = 5,
         target_y: int = 5,
     ) -> None:
@@ -99,17 +109,36 @@ class EndlessRandomSquareSimulation:
                 raise Exception(f"Exception resetting simulation {self.state.sim_id}: {r.state_response.error_message}")
             self.state = r.state_response.state
 
-        logging.info(f"Doing step of simulation {self.state.sim_id}")
-        r = self.client.do_step(self.state.sim_id, [DroneAction(id=x.id, action=random_action()) for x in self.state.drone_states])
+        r = self.client.do_step(self.state.sim_id, [DroneAction(id=x.id, action=random_action(), velocity=random.randrange(1, 3)) for x in self.state.drone_states])
         if has_error(r.state_response):
             raise Exception(f"Exception doing step of simulation {self.state.sim_id}: {r.state_response.error_message}")
+
+        self.state = r.state_response.state
 
         return False
 
 
 def random_action():
     randint = random.randrange(1, 10)
-    return Action(randint)
+
+    if randint == 1:
+        return ACTION_DOWN
+    if randint == 2:
+        return ACTION_LEFT_DOWN
+    if randint == 3:
+        return ACTION_LEFT
+    if randint == 4:
+        return ACTION_LEFT_UP
+    if randint == 5:
+        return ACTION_UP
+    if randint == 6:
+        return ACTION_RIGHT_UP
+    if randint == 7:
+        return ACTION_RIGHT
+    if randint == 8:
+        return ACTION_RIGHT_DOWN
+
+    return ACTION_NOTHING
 
 
 def has_error(response: StateResponse) -> bool:
@@ -119,9 +148,13 @@ def has_error(response: StateResponse) -> bool:
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
     channel = grpc.insecure_channel("localhost:50051");
+
+    time.sleep(1)
+
     simulation = EndlessRandomSquareSimulation(chan=channel)
 
     while not simulation.progress():
+        time.sleep(.1)
         pass
 
 

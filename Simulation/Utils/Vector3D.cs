@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Simulation.Utils;
 
@@ -169,5 +171,106 @@ public static class VectorExtensions
         return Math.Abs(v1.X - v2.X) < epsilon &&
             Math.Abs(v1.Y - v2.Y) < epsilon &&
             Math.Abs(v1.Z - v2.Z) < epsilon;
+    }
+    
+    public static List<(Vector3D<float>, int, int)> SweepTests(List<Vector3D<float>> before, List<Vector3D<float>> after)
+    {
+        var orderedPairs = before.Zip(after).Select((e, i) =>
+                e.First.X < e.Second.X ?
+                    (e.First.X, e.Second.X) :
+                    (e.Second.X, e.First.X)
+            ).ToList();
+
+        List<HashSet<int>> overlapIndeces = [];
+
+        for (int i = 0; i < orderedPairs.Count; i++)
+        {
+            HashSet<int> set = [i];
+            var p1 = orderedPairs[i];
+            for (int j = i + 1; j < orderedPairs.Count; j++)
+            {
+                var p2 = orderedPairs[j];
+                if (
+                    (p1.Item1 <= p2.Item1 && p2.Item1 <= p1.Item2) ||
+                    (p1.Item1 <= p2.Item2 && p2.Item2 <= p1.Item2) ||
+
+                    (p2.Item1 <= p1.Item1 && p1.Item1 <= p2.Item2) ||
+                    (p2.Item1 <= p1.Item2 && p1.Item2 <= p2.Item2)
+                )
+                {
+                    set.Add(j);
+                }
+            }
+
+            // Add only unique sets
+            var wasFound = false;
+            foreach (var s in overlapIndeces)
+            {
+                wasFound = wasFound || s.SetEquals(set);
+                if (wasFound) break;
+            }
+
+            if (!wasFound)
+                overlapIndeces.Add(set);
+        }
+
+        // Remove any subsets thay may be found.
+        var overlaps = overlapIndeces.Where(s1 => overlapIndeces.All(s2 => !s1.IsProperSubsetOf(s2))).ToList();
+
+        // Now that all overlaps in 1D have been found, we need to check if they actually did collide.
+        // Start by construct the pairs to check
+        List<(int, int)> overlapPairs = [];
+        foreach (var overlap in overlaps)
+        {
+            var overlapList = overlap.ToList();
+            for (int i = 0; i < overlapList.Count; i++)
+            {
+                for (int j = i + 1; j < overlapList.Count; j++)
+                {
+                    overlapPairs.Add((overlapList[i], overlapList[j]));
+                }
+            }
+        }
+
+        List<(Vector3D<float>, int, int)> points = [];
+        foreach (var (i, j) in overlapPairs)
+        {
+            var v1b = before[i];
+            var v1a = after[i];
+
+            var v2b = before[j];
+            var v2a = after[j];
+
+            // Movement vectors
+            var v1Mov = v1a.Sub(v1b);
+            var v2Mov = v2a.Sub(v2b);
+            var deltaMov = v1Mov.Sub(v2Mov);
+
+            var P = new Vector3D<float>(0, 0, 0);
+            var A = v1b.Sub(v2b);
+            var B = A.Add(deltaMov);
+            var point = ProjectPointOntoSegment(P, A, B);
+
+            points.Add((point, i, j));
+        }
+
+        return points;
+    }
+
+    /*
+     * <summary>
+     * Project a point P onto a line segment AB
+     * </summary>
+     */
+    private static Vector3D<float> ProjectPointOntoSegment(Vector3D<float> P, Vector3D<float> A, Vector3D<float> B)
+    {
+        Vector3D<float> d = B.Sub(A);
+        float dDotD = d.Dot(d);
+
+        if (dDotD == 0f)
+            return A;
+
+        float t = Math.Clamp(P.Sub(A).Dot(d) / dDotD, 0f, 1f);
+        return A.Add(d.Scale(t));
     }
 }

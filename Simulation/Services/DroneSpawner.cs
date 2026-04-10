@@ -19,6 +19,6 @@ public class DroneSpawner : IDroneSpawner
         var drone = scene.Instantiate<StaticBody3D>();
         Main.MainScene.CallDeferred(Node.MethodName.AddChild, drone);
 
-        return new GWDrone(drone, id, !isAttacker);
+        return new GWDrone(drone, id, isAttacker);
     }
 }

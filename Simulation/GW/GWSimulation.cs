@@ -214,7 +214,7 @@ public class GWSimulationInstance(
     public Task<State> Reset()
     {
         var defPositions = _positionUtility.GetSpawnPositions(_mapSpec, _defenders.Count, false);
-        var attPositions = _positionUtility.GetSpawnPositions(_mapSpec, _attackers.Count, false);
+        var attPositions = _positionUtility.GetSpawnPositions(_mapSpec, _attackers.Count, true);
 
         foreach (var (drone, pos) in _defenders.Zip(defPositions))
             drone.SetPosition(new Vector3I(pos.X, 1, pos.Z));

@@ -1,12 +1,13 @@
 using Grpc.Core;
-using GWSimulation;
+using GW2D.V1;
 using Serilog;
 
 namespace Simulation.Lib.GW;
 
-public class GWSimulationServer : GWSimulation.GWSimulation.GWSimulationBase, IDisposable
+public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisposable
 {
     private readonly Dictionary<long, SimulationDatetime> _simulations = [];
+
     private readonly ILogger _logger;
     private readonly IGWSimulationFactory _simulationFactory;
     private readonly SemaphoreSlim _simulationSemaphore = new(1);
@@ -40,49 +41,68 @@ public class GWSimulationServer : GWSimulation.GWSimulation.GWSimulationBase, ID
         }
     }
 
-    public override async Task<GWActionResponse> DoStep(GWActionRequest request, ServerCallContext context)
+    public override async Task<DoStepResponse> DoStep(DoStepRequest request, ServerCallContext context)
     {
-        if (!_simulations.TryGetValue(request.Id, out var simDate))
+        if (!_simulations.TryGetValue(request.SimId, out var simDate))
         {
-            return new GWActionResponse
+            return new DoStepResponse
             {
-                ErrorMessage = $"The simulation with id={request.Id} doesn't exist!"
+                StateResponse = new StateResponse
+                {
+                    ErrorMessage = $"The simulation with id={request.SimId} doesn't exist!"
+                }
             };
         }
         simDate.DateTime = DateTime.UtcNow;
 
         var newState = await simDate.Simulation.DoStep([.. request.DroneActions]);
 
-        return new GWActionResponse
+        return new DoStepResponse
         {
-            State = newState
+            StateResponse = new StateResponse
+            {
+                State = newState
+            }
         };
     }
 
-    public override async Task<GWResetResponse> Reset(GWResetRequest request, ServerCallContext context)
+    public override async Task<ResetResponse> Reset(ResetRequest request, ServerCallContext context)
     {
-        if (!_simulations.TryGetValue(request.Id, out var simDate))
+        if (!_simulations.TryGetValue(request.SimId, out var simDate))
         {
-            throw new Exception($"Cannot reset non-existing simulation {request.Id}");
+            return new ResetResponse
+            {
+                StateResponse = new StateResponse
+                {
+                    ErrorMessage = $"The simulation with id={request.SimId} doesn't exist!"
+                }
+            };
         }
+
         simDate.DateTime = DateTime.UtcNow;
         var state = await simDate.Simulation.Reset();
 
-        return new GWResetResponse
+
+        return new ResetResponse
         {
-            State = state
+            StateResponse = new StateResponse
+            {
+                State = state
+            }
         };
     }
 
-    public override async Task<GWNewResponse> New(GWNewRequest request, ServerCallContext context)
+    public override async Task<NewResponse> New(NewRequest request, ServerCallContext context)
     {
-        var newSim = await _simulationFactory.CreateSimulation();
+        IGWSimulation newSim;
 
+        // IGWSimulation newSim = await _simulationFactory.CreateSimulation();
         long id;
         await _simulationSemaphore.WaitAsync();
         try
         {
             id = GetNewId();
+            newSim = await _simulationFactory.CreateSimulation(id);
             _simulations.Add(id, new SimulationDatetime(newSim, DateTime.UtcNow));
         }
         finally
@@ -90,24 +110,32 @@ public class GWSimulationServer : GWSimulation.GWSimulation.GWSimulationBase, ID
             _simulationSemaphore.Release();
         }
 
-        var state = await newSim.Reset();
-        return new GWNewResponse
+        var state = await newSim.New(
+            request.Map,
+            (int)request.EvaderCount,
+            (int)request.PursuerCount,
+            (int)request.DroneVelocity
+        );
+
+        return new NewResponse
         {
-            Id = id,
-            State = state
+            StateResponse = new StateResponse
+            {
+                State = state
+            }
         };
     }
 
-    public override async Task<GWCloseResponse> Close(GWCloseRequest request, ServerCallContext context)
+    public override async Task<CloseResponse> Close(CloseRequest request, ServerCallContext context)
     {
-        if (_simulations.TryGetValue(request.Id, out var simDate))
+        if (_simulations.TryGetValue(request.SimId, out var simDate))
         {
             await simDate.Simulation.Close();
             await _simulationSemaphore.WaitAsync();
 
             try
             {
-                _simulations.Remove(request.Id);
+                _simulations.Remove(request.SimId);
             }
             finally
             {
@@ -115,7 +143,7 @@ public class GWSimulationServer : GWSimulation.GWSimulation.GWSimulationBase, ID
             }
         }
 
-        return new GWCloseResponse { };
+        return new CloseResponse { };
     }
 
     private record SimulationDatetime(IGWSimulation Simulation, DateTime DateTime)

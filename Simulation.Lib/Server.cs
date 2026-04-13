@@ -1,7 +1,5 @@
 using Grpc.Core;
 using Serilog;
-using Simulation.Lib.GW;
-using Simulation.Lib.TDF;
 
 namespace Simulation.Lib;
 
@@ -9,31 +7,23 @@ public class Server(
     ILogger logger,
     string host,
     int port,
-    IGWSimulationFactory gwSimulationFactory,
-    ITDFSimulationFactory tdfSimulationFactory
+    GW2D.V1.SimulationService.SimulationServiceBase gwSimulationService,
+    TDFSimulation.TDFSimulation.TDFSimulationBase tdfSimulationService
 )
 {
     private readonly ILogger _logger = logger;
     private readonly string _host = host;
     private readonly int _port = port;
-    private readonly IGWSimulationFactory _gwSimulationFactory = gwSimulationFactory;
-    private readonly ITDFSimulationFactory _tdfSimulationFactory = tdfSimulationFactory;
+    private readonly GW2D.V1.SimulationService.SimulationServiceBase _gwSimulationService = gwSimulationService;
+    private readonly TDFSimulation.TDFSimulation.TDFSimulationBase _tdfSimulationService = tdfSimulationService;
 
     public void StartServer()
     {
-        var gwService = new GWSimulationServer(_gwSimulationFactory, _logger);
-        var gwLoggingDecorator = new GWLoggingDecorator(gwService, _logger);
-        var gwErrorDecorator = new GWErrorDecorator(gwLoggingDecorator, _logger);
-
-        var tdfService = new TDFSimulationServer(_tdfSimulationFactory, _logger);
-        var tdfLoggingDecorator = new TDFLoggingDecorator(tdfService, _logger);
-        var tdfErrorDecorator = new TDFErrorDecorator(tdfLoggingDecorator, _logger);
-
         var server = new Grpc.Core.Server
         {
             Services = {
-                GWSimulation.GWSimulation.BindService(gwErrorDecorator),
-                TDFSimulation.TDFSimulation.BindService(tdfErrorDecorator)
+                GW2D.V1.SimulationService.BindService(_gwSimulationService),
+                TDFSimulation.TDFSimulation.BindService(_tdfSimulationService)
             },
             Ports = { new ServerPort(_host, _port, ServerCredentials.Insecure) }
         };

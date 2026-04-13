@@ -1,7 +1,8 @@
 using Godot;
-using GWSimulation;
+using GW2D.V1;
+using Serilog;
 
-namespace Simulation.GridEnvironment;
+namespace Simulation.Instances;
 
 public class GWDrone(StaticBody3D staticBody3D, long id, bool isEvader)
 {
@@ -22,20 +23,20 @@ public class GWDrone(StaticBody3D staticBody3D, long id, bool isEvader)
     public long Id => _id;
     public bool Destroyed { get; set; }
 
-    public void SetPosition(GWPosition position)
+    public void SetPosition(Vector3I position)
     {
         _x = position.X;
         _y = position.Y;
         _z = position.Z;
 
-        StaticBody3D.CallDeferred(Node3D.MethodName.SetPosition, new Vector3(position.X, position.Y, position.Z));
+        StaticBody3D.CallDeferred(Node3D.MethodName.SetPosition, (Vector3)position);
     }
 
-    public GWPosition GetPosition() => new(_x, _y, _z);
+    public Vector3I GetPosition() => new(_x, _y, _z);
 
-    public GWDroneState GetState()
+    public DroneState GetState()
     {
-        return new GWDroneState
+        return new DroneState
         {
             Id = _id,
             X = _x,

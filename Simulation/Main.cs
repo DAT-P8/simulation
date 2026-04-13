@@ -1,13 +1,16 @@
 using System;
 using Godot;
 using Serilog;
-using Simulation.GridEnvironment;
 using Serilog.Events;
 using Simulation.Lib;
 using Simulation.TDF;
+using Autofac;
+using Simulation.GW;
+using Simulation.Lib.GW;
+using Simulation.Lib.TDF;
+using Simulation.Services;
 
 namespace Simulation;
-
 
 public partial class Main : Node3D
 {
@@ -29,14 +32,11 @@ public partial class Main : Node3D
             .CreateLogger();
         Log.Logger = logger;
 
-        var gwFactory = new GWSimulationFactory();
-        var tdfFactory = new TDFSimulationFactory();
-        var world = new GWMap(10);
-        var view = world.GenerateTexture();
-        AddChild(view);
-        AddChild(world.ConstructMap(view));
+        var builder = new ContainerBuilder();
+        builder.RegisterServices(logger, "localhost", 50051, 420);
+        var container = builder.Build();
 
-        var server = new Server(logger, "localhost", 50051, gwFactory, tdfFactory);
+        var server = container.Resolve<Server>();
         server.StartServer();
     }
 

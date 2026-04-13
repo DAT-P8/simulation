@@ -12,7 +12,6 @@ using Simulation.Services;
 
 namespace Simulation;
 
-
 public partial class Main : Node3D
 {
     public static Main MainScene { get; internal set; } = null!;

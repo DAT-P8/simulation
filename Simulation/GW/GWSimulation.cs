@@ -119,33 +119,62 @@ public class GWSimulationInstance(
     public Task<State> DoStep(List<DroneAction> actions)
     {
         var allDrones = _defenders.Concat(_attackers).ToList();
-        var beforePositions = _defenders.Concat(_attackers)
-            .Where(e => !e.Destroyed)
-            .Select(e => (e.Id, e.GetPosition()))
-            .ToList();
+        List<(long Id, Vector3I)> beforePositions = [];
+        List<(long Id, Vector3I)> potentialAfterPositions = [];
 
-        foreach (var action in actions)
+        foreach (var drone in allDrones)
         {
-            var drone = allDrones.FirstOrDefault(e => e.Id == action.Id) ??
-                throw new Exception($"Did not find drone with id: {action.Id}");
             if (drone.Destroyed) continue;
+
+            var action = actions.FirstOrDefault(e => e.Id == drone.Id);
+
+            if (action is null)
+            {
+                beforePositions.Add((drone.Id, drone.GetPosition()));
+                potentialAfterPositions.Add((drone.Id, drone.GetPosition()));
+                continue;
+            }
+
+            beforePositions.Add((drone.Id, drone.GetPosition()));
             var resultingPosition = drone.GetPosition() + DtoMapper.ToVector(action.Action) * (int)action.Velocity;
-            drone.SetPosition(resultingPosition);
+
+            potentialAfterPositions.Add((drone.Id, resultingPosition));
         }
 
-        var afterPositions = _defenders.Concat(_attackers)
-            .Where(e => !e.Destroyed)
-            .Select(e => (e.Id, e.GetPosition()))
-            .ToList();
-
         var zippedPositions = beforePositions
-            .Zip(afterPositions)
+            .Zip(potentialAfterPositions)
             .Select(e => (e.First.Id, e.First.Item2, e.Second.Item2))
             .ToList();
 
+        // Shielding on disallowed actions - e.g. flying through target area as defender
+        var reachedTarget = GetTargetReached(zippedPositions);
+        foreach (var d in allDrones)
+        {
+            if (d.Destroyed) continue;
+
+            var afterPos = potentialAfterPositions.First(e => e.Id == d.Id);
+            var throughTarget = reachedTarget.Any(e => e == d.Id);
+
+            if (!d.IsEvader && throughTarget)
+            {
+                // This drone attempted a flythrough of target area
+                _logger.Information("Drone {Id} attempted a flythrough of the target area", d.Id);
+                continue;
+            }
+
+            d.SetPosition(afterPos.Item2);
+        }
+
+        List<(long Id, Vector3I)> afterPositions = [];
+        foreach (var (id, _) in beforePositions)
+        {
+            var drone = allDrones.First(e => e.Id == id);
+            afterPositions.Add((id, drone.GetPosition()));
+        }
+
         var collisions = GetCollisions(zippedPositions);
         var outOfBounds = GetOutOfBounds(zippedPositions);
-
+        
         foreach (var collision in collisions)
         {
             foreach (var id in collision.DroneIds)
@@ -165,9 +194,59 @@ public class GWSimulationInstance(
             drone.Destroyed = true;
         }
 
+        // If a drone has reached target, check it didn't die on the way there
+        // if so, it didn't really reach the target
+        List<long> filteredReachedTarget = [];
+        foreach (var id in reachedTarget)
+        {
+            var drone = allDrones.Find(e => e.Id == id) ??
+                throw new Exception($"Did not find a drone with id: {id}");
+
+            if (!drone.Destroyed)
+                filteredReachedTarget.Add(id);
+        }
+
         var collisionEvents = collisions.Select(e => new Event { CollisionEvent = e }).ToList();
         var outOfBoundsEvent = new Event { OutOfBoundsEvent = outOfBounds };
-        return Task.FromResult(GetState([.. collisionEvents, outOfBoundsEvent]));
+        List<Event> events = [.. collisionEvents, outOfBoundsEvent];
+        
+        if (filteredReachedTarget.Count != 0)
+            events = [.. events, new Event { TargetReachedEvent = new TargetReachedEvent { DroneIds = { filteredReachedTarget } } }];
+
+        return Task.FromResult(GetState(events));
+    }
+
+    private List<long> GetTargetReached(List<(long Id, Vector3I, Vector3I)> positions)
+    {
+        var targetPositions = _positionUtility.GetTargetPositions(_mapSpec);
+
+        List<long> ids = [];
+        foreach (var (id, before, after) in positions)
+        {
+            var beforeVec = new Vector3D<float>(before.X, before.Y, before.Z);
+            var afterVec = new Vector3D<float>(after.X, after.Y, after.Z);
+
+            foreach (var targetPosition in targetPositions)
+            {
+                var targetBefore = new Vector3D<float>(targetPosition.X, targetPosition.Y, targetPosition.Z);
+                var targetAfter = new Vector3D<float>(targetPosition.X, targetPosition.Y, targetPosition.Z);
+
+                var point = VectorExtensions.SweepPair(
+                    targetBefore,
+                    targetAfter,
+                    beforeVec,
+                    afterVec
+                );
+
+                if (point.Dot(point) <= .1)
+                {
+                    ids.Add(id);
+                    break;
+                }
+            }
+        }
+
+        return ids;
     }
 
     private OutOfBoundsEvent GetOutOfBounds(List<(long Id, Vector3I, Vector3I)> positions)
@@ -234,7 +313,20 @@ public class GWSimulationInstance(
 
     public State GetState(List<Event> events)
     {
-        bool terminated = _attackers.All(e => e.Destroyed);
+        bool attackerReachedTarget = false;
+        foreach (var ev in events)
+        {
+            if (ev.EventOneofCase != Event.EventOneofOneofCase.TargetReachedEvent)
+                continue;
+
+            attackerReachedTarget = _attackers.Any(e => ev.TargetReachedEvent.DroneIds.Any(e2 => e.Id == e2));
+            if (attackerReachedTarget) break;
+        }
+        bool terminated = attackerReachedTarget || _attackers.All(e => e.Destroyed);
+
+        if (attackerReachedTarget)
+            _logger.Information("An attacker reached target");
+
         State state = new()
         {
             Events = { events },

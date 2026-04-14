@@ -174,7 +174,7 @@ public class GWSimulationInstance(
 
         var collisions = GetCollisions(zippedPositions);
         var outOfBounds = GetOutOfBounds(zippedPositions);
-        
+
         foreach (var collision in collisions)
         {
             foreach (var id in collision.DroneIds)
@@ -209,7 +209,7 @@ public class GWSimulationInstance(
         var collisionEvents = collisions.Select(e => new Event { CollisionEvent = e }).ToList();
         var outOfBoundsEvent = new Event { OutOfBoundsEvent = outOfBounds };
         List<Event> events = [.. collisionEvents, outOfBoundsEvent];
-        
+
         if (filteredReachedTarget.Count != 0)
             events = [.. events, new Event { TargetReachedEvent = new TargetReachedEvent { DroneIds = { filteredReachedTarget } } }];
 

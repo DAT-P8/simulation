@@ -142,11 +142,11 @@ public class PositionUtility(Random random, ILogger logger) : IPositionUtility
             _ => throw new Exception($"Did not recognize Map type: {mapSpec.MapOneofCase}"),
         };
     }
-    
+
     public List<Vector3I> GetTargetPositions(SquareMap mapSpec)
     {
         // Same height as drones are spawned in
-        return [new ((int)mapSpec.TargetX, 1, (int)mapSpec.TargetY)];
+        return [new((int)mapSpec.TargetX, 1, (int)mapSpec.TargetY)];
     }
 
     // Introduce record for equality-based comparison

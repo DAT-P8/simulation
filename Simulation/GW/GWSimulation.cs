@@ -235,7 +235,7 @@ public class GWSimulationInstance(
     public State GetState(List<Event> events)
     {
         bool terminated = _attackers.All(e => e.Destroyed);
-                
+
         var relevantDrones = _attackers.Concat(_defenders).Where(e => !e.Destroyed).ToList();
 
         State state = new()

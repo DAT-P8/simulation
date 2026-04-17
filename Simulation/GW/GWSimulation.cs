@@ -145,8 +145,7 @@ public class GWSimulationInstance(
 
         var toDestroy = collisions
             .SelectMany(e => e.DroneIds)
-            .Concat(outOfBounds.DroneIds)
-            .Concat(targetReached.DroneIds);
+            .Concat(outOfBounds.DroneIds);
 
         foreach (var id in toDestroy)
         {

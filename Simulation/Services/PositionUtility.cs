@@ -46,7 +46,7 @@ public class PositionUtility(Random random, ILogger logger) : IPositionUtility
 
     private bool IsOnTarget(SquareMap mapSpec, Vector3I position)
     {
-        return position.X == mapSpec.TargetX && position.Y == mapSpec.TargetY;
+        return position.X == mapSpec.TargetX && position.Z == mapSpec.TargetY;
     }
 
     private bool IsInBounds(SquareMap mapSpec, Vector3I position)

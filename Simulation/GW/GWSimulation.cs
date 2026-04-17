@@ -103,6 +103,8 @@ public class GWSimulationInstance(
     long simId
 ) : IDisposable
 {
+    private const float AREA_COLLISION_THRESHOLD = 0.5f;
+
     private readonly List<GWDrone> _defenders = defenders;
     private readonly List<GWDrone> _attackers = attackers;
     private readonly IPositionUtility _positionUtility = positionUtility;
@@ -118,98 +120,208 @@ public class GWSimulationInstance(
 
     public Task<State> DoStep(List<DroneAction> actions)
     {
-        var allDrones = _defenders.Concat(_attackers).ToList();
-        var beforePositions = _defenders.Concat(_attackers)
-            .Where(e => !e.Destroyed)
-            .Select(e => (e.Id, e.GetPosition()))
-            .ToList();
+        var drones = _defenders.Concat(_attackers).Where(d => !d.Destroyed).ToList();
 
-        foreach (var action in actions)
-        {
-            var drone = allDrones.FirstOrDefault(e => e.Id == action.Id) ??
-                throw new Exception($"Did not find drone with id: {action.Id}");
-            if (drone.Destroyed) continue;
-            var resultingPosition = drone.GetPosition() + DtoMapper.ToVector(action.Action) * (int)action.Velocity;
-            drone.SetPosition(resultingPosition);
-        }
-
-        var afterPositions = _defenders.Concat(_attackers)
-            .Where(e => !e.Destroyed)
-            .Select(e => (e.Id, e.GetPosition()))
-            .ToList();
-
-        var zippedPositions = beforePositions
-            .Zip(afterPositions)
-            .Select(e => (e.First.Id, e.First.Item2, e.Second.Item2))
-            .ToList();
-
-        var collisions = GetCollisions(zippedPositions);
-        var outOfBounds = GetOutOfBounds(zippedPositions);
-
-        foreach (var collision in collisions)
-        {
-            foreach (var id in collision.DroneIds)
+        var before = drones.Select(e => e.GetPosition()).ToList();
+        MoveDrones(actions);
+        var after = drones.Select(e => e.GetPosition()).ToList();
+        var zipped = drones
+            .Zip(before.Zip(after))
+            .Select(e =>
             {
-                var drone = allDrones.FirstOrDefault(e => e.Id == id) ??
-                    throw new Exception($"Detected a collision with a drone that doesn't exist: {id}");
+                var (drone, (before, after)) = e;
+                return (drone, before, after);
+            })
+            .ToList();
 
-                drone.Destroyed = true;
-            }
-        }
+        var collisions = CollisionCheck(zipped);
+        var outOfBounds = BoundsCheck(zipped);
+        var targetReached = TargetCheck(zipped);
+        var defenderEnteredTarget = PursuerEnteredTargetCheck(zipped);
 
-        foreach (var id in outOfBounds.DroneIds)
+        outOfBounds = RemoveCollidedFromOutOfBounds(collisions, outOfBounds);
+        defenderEnteredTarget = RemoveCollidedFromPursuerEnteredTarget(collisions, defenderEnteredTarget);
+        targetReached = RemoveCollidedFromTargetReached(collisions, targetReached);
+
+        var toDestroy = collisions
+            .SelectMany(e => e.DroneIds)
+            .Concat(outOfBounds.DroneIds);
+
+        foreach (var id in toDestroy)
         {
-            var drone = allDrones.FirstOrDefault(e => e.Id == id) ??
-                throw new Exception($"Detected an out of bounds event with a drone that doesn't exist: {id}");
-
+            var drone = drones.FirstOrDefault(e => e.Id == id) ??
+                throw new Exception($"Did not find a drone with id: {id}");
             drone.Destroyed = true;
         }
 
-        var collisionEvents = collisions.Select(e => new Event { CollisionEvent = e }).ToList();
-        var outOfBoundsEvent = new Event { OutOfBoundsEvent = outOfBounds };
-        return Task.FromResult(GetState([.. collisionEvents, outOfBoundsEvent]));
+        List<Event> events = [];
+        if (outOfBounds.DroneIds.Count != 0)
+            events.Add(new Event { OutOfBoundsEvent = outOfBounds });
+        if (targetReached.DroneIds.Count != 0)
+            events.Add(new Event { TargetReachedEvent = targetReached });
+        if (collisions.Any(e => e.DroneIds.Count != 0))
+            events.AddRange(collisions.Select(e => new Event { CollisionEvent = e }));
+
+        return Task.FromResult(GetState(events));
     }
 
-    private OutOfBoundsEvent GetOutOfBounds(List<(long Id, Vector3I, Vector3I)> positions)
+    private PursuerEnteredTargetEvent RemoveCollidedFromPursuerEnteredTarget(List<CollisionEvent> collisions, PursuerEnteredTargetEvent defenderEnteredTarget)
     {
-        List<long> ids = [];
-        foreach (var position in positions)
+        var collisionIds = collisions.SelectMany(e => e.DroneIds).ToHashSet();
+        var defenderIds = defenderEnteredTarget.DroneIds.ToHashSet();
+
+        foreach (var id in defenderIds.Intersect(collisionIds))
+            defenderIds.Remove(id);
+
+        return new PursuerEnteredTargetEvent
         {
-            var (id, _, after) = position;
-
-            if (_positionUtility.IsInBounds(_mapSpec, after))
-                continue;
-
-            ids.Add(id);
-        }
-
-        return new OutOfBoundsEvent
-        {
-            DroneIds = { ids }
+            DroneIds = { defenderIds }
         };
     }
 
-    private List<CollisionEvent> GetCollisions(List<(long Id, Vector3I, Vector3I)> positions)
+    private PursuerEnteredTargetEvent PursuerEnteredTargetCheck(List<(GWDrone drone, Vector2I before, Vector2I after)> zipped)
     {
-        var before = positions.Select(e => e.Item3).Select(e => new Vector3D<float>(e.X, e.Y, e.Z)).ToList();
-        var after = positions.Select(e => e.Item2).Select(e => new Vector3D<float>(e.X, e.Y, e.Z)).ToList();
+        var targetPositions = _positionUtility.GetTargetPositions(_mapSpec).Select(p => new Vector2I(p.X, p.Z));
 
-        var results = VectorExtensions.SweepTests(before, after);
-
-        List<CollisionEvent> events = [];
-        foreach (var result in results)
+        List<long> inTarget = [];
+        foreach (var (drone, before, after) in zipped)
         {
-            var (pointProjection, idx1, idx2) = result;
-            var colEvent = new CollisionEvent
-            {
-                DroneIds = { idx1, idx2 }
-            };
+            if (drone.IsEvader) continue;
 
-            events.Add(colEvent);
+            foreach (var tp in targetPositions)
+            {
+                var target = new Vector3D<float>(tp.X, 0, tp.Y);
+                var b = new Vector3D<float>(before.X, 0, before.Y);
+                var a = new Vector3D<float>(after.X, 0, after.Y);
+                var point = VectorExtensions.SweepPair(b, a, target, target);
+
+                if (point.Dot(point) <= AREA_COLLISION_THRESHOLD)
+                {
+                    inTarget.Add(drone.Id);
+                    break;
+                }
+
+            }
         }
 
-        return events;
+        return new PursuerEnteredTargetEvent
+        {
+            DroneIds = { inTarget }
+        };
     }
+
+    private TargetReachedEvent RemoveCollidedFromTargetReached(List<CollisionEvent> collisions, TargetReachedEvent targetReached)
+    {
+        var idSet = targetReached.DroneIds.ToHashSet();
+        var collisionIds = collisions.SelectMany(e => e.DroneIds).ToList();
+
+        foreach (var id in collisionIds.Intersect(idSet))
+            idSet.Remove(id);
+
+        return new TargetReachedEvent
+        {
+            DroneIds = { idSet }
+        };
+    }
+
+    private OutOfBoundsEvent RemoveCollidedFromOutOfBounds(List<CollisionEvent> collisions, OutOfBoundsEvent outOfBounds)
+    {
+        var idSet = outOfBounds.DroneIds.ToHashSet();
+        var collisionIds = collisions.SelectMany(e => e.DroneIds).ToList();
+
+        foreach (var id in collisionIds.Intersect(idSet))
+            idSet.Remove(id);
+
+        return new OutOfBoundsEvent
+        {
+            DroneIds = { idSet }
+        };
+    }
+
+    private TargetReachedEvent TargetCheck(List<(GWDrone drone, Vector2I before, Vector2I after)> zipped)
+    {
+        List<long> onTarget = [];
+        foreach (var (drone, _, after) in zipped)
+        {
+            if (!drone.IsEvader) continue;
+
+            if (!_positionUtility.IsOnTarget(_mapSpec, new Vector3I(after.X, 0, after.Y)))
+                continue;
+
+            onTarget.Add(drone.Id);
+        }
+
+        return new TargetReachedEvent
+        {
+            DroneIds = { onTarget }
+        };
+    }
+
+    private OutOfBoundsEvent BoundsCheck(List<(GWDrone drone, Vector2I before, Vector2I after)> zipped)
+    {
+        List<long> ids = [];
+        foreach (var (drone, _, after) in zipped)
+        {
+            _positionUtility.IsInBounds(_mapSpec, new Vector3I(after.X, 0, after.Y));
+            ids.Add(drone.Id);
+        }
+
+        var outOfbounds = new OutOfBoundsEvent()
+        {
+            DroneIds = { ids }
+        };
+
+        return outOfbounds;
+    }
+
+    private List<CollisionEvent> CollisionCheck(List<(GWDrone drone, Vector2I before, Vector2I after)> zipped)
+    {
+        List<(long, long)> pairs = [];
+        for (int i = 0; i < zipped.Count; i++)
+        {
+            for (int j = i + 1; j < zipped.Count; j++)
+            {
+                var (d1, b1, a1) = zipped[i];
+                var (d2, b2, a2) = zipped[j];
+
+                var point = VectorExtensions.SweepPair(
+                    new Vector3D<float>(b1.X, 0, b1.Y),
+                    new Vector3D<float>(a1.X, 0, a1.Y),
+                    new Vector3D<float>(b2.X, 0, b2.Y),
+                    new Vector3D<float>(a2.X, 0, a2.Y)
+                );
+
+                if (point.Dot(point) <= .5)
+                {
+                    pairs.Add((d1.Id, d2.Id));
+                }
+            }
+        }
+
+        return [.. pairs.Select(e => {
+            return new CollisionEvent
+            {
+                DroneIds = { e.Item1, e.Item2 }
+            };
+        })];
+    }
+
+    private void MoveDrones(List<DroneAction> actions)
+    {
+        var drones = _defenders.Concat(_attackers).ToList();
+        foreach (var action in actions)
+        {
+            var drone = drones.FirstOrDefault(e => e.Id == action.Id) ??
+                throw new Exception($"Did not find drone with id: {action.Id}");
+
+            if (drone.Destroyed) continue;
+
+            var movementVec = DtoMapper.ToVector(action.Action) * (int)action.Velocity;
+            var newPosition = drone.GetPosition() + movementVec;
+            drone.SetPosition(newPosition);
+        }
+    }
+
 
     public Task<State> Reset()
     {
@@ -217,9 +329,9 @@ public class GWSimulationInstance(
         var attPositions = _positionUtility.GetSpawnPositions(_mapSpec, _attackers.Count, true);
 
         foreach (var (drone, pos) in _defenders.Zip(defPositions))
-            drone.SetPosition(new Vector3I(pos.X, 1, pos.Z));
+            drone.SetPosition(new Vector2I(pos.X, pos.Z));
         foreach (var (drone, pos) in _attackers.Zip(attPositions))
-            drone.SetPosition(new Vector3I(pos.X, 1, pos.Z));
+            drone.SetPosition(new Vector2I(pos.X, pos.Z));
 
         foreach (var drone in _attackers.Concat(_defenders))
             drone.Destroyed = false;
@@ -234,7 +346,20 @@ public class GWSimulationInstance(
 
     public State GetState(List<Event> events)
     {
-        bool terminated = _attackers.All(e => e.Destroyed);
+        bool terminated = false;
+        foreach (var ev in events)
+        {
+            if (
+                ev.EventOneofCase == Event.EventOneofOneofCase.TargetReachedEvent &&
+                ev.TargetReachedEvent.DroneIds.Count != 0
+            )
+            {
+                terminated = true;
+                break;
+            }
+        }
+        terminated = terminated || _attackers.All(e => e.Destroyed);
+
         State state = new()
         {
             Events = { events },
@@ -244,7 +369,7 @@ public class GWSimulationInstance(
                 _attackers.Concat(_defenders).Select(e => new DroneState {
                     Destroyed = e.Destroyed,
                     X = e.X,
-                    Y = e.Z,
+                    Y = e.Y,
                     Id = e.Id,
                     IsEvader = e.IsEvader
                 })
@@ -264,7 +389,4 @@ public class GWSimulationInstance(
         _defenders.Clear();
         _attackers.Clear();
     }
-
-    private record PositionID(Vector3I Position, long Id);
-    private record PositionPairId(Vector3I Before, Vector3I After, long Id);
 }

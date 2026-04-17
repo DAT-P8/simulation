@@ -46,7 +46,7 @@ public class PositionUtility(Random random, ILogger logger) : IPositionUtility
 
     private bool IsOnTarget(SquareMap mapSpec, Vector3I position)
     {
-        return position.X == mapSpec.TargetX && position.Y == mapSpec.TargetY;
+        return position.X == mapSpec.TargetX && position.Z == mapSpec.TargetY;
     }
 
     private bool IsInBounds(SquareMap mapSpec, Vector3I position)
@@ -130,6 +130,23 @@ public class PositionUtility(Random random, ILogger logger) : IPositionUtility
         }
 
         return [.. positions.Select(e => new Vector3I(e.X, e.Y, e.Z))];
+    }
+
+    public List<Vector3I> GetTargetPositions(MapSpec mapSpec)
+    {
+        return mapSpec.MapOneofCase switch
+        {
+            MapSpec.MapOneofOneofCase.None => throw new Exception("Map is None, cannot get target positions."),
+            MapSpec.MapOneofOneofCase.SquareMap => GetTargetPositions(mapSpec.SquareMap),
+
+            _ => throw new Exception($"Did not recognize Map type: {mapSpec.MapOneofCase}"),
+        };
+    }
+
+    public List<Vector3I> GetTargetPositions(SquareMap mapSpec)
+    {
+        // Same height as drones are spawned in
+        return [new((int)mapSpec.TargetX, 1, (int)mapSpec.TargetY)];
     }
 
     // Introduce record for equality-based comparison

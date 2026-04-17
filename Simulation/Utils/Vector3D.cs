@@ -242,19 +242,36 @@ public static class VectorExtensions
             var v2a = after[j];
 
             // Movement vectors
-            var v1Mov = v1a.Sub(v1b);
-            var v2Mov = v2a.Sub(v2b);
-            var deltaMov = v1Mov.Sub(v2Mov);
-
-            var P = new Vector3D<float>(0, 0, 0);
-            var A = v1b.Sub(v2b);
-            var B = A.Add(deltaMov);
-            var point = ProjectPointOntoSegment(P, A, B);
+            var point = SweepPair(v1b, v1a, v2b, v2a);
 
             points.Add((point, i, j));
         }
 
         return points;
+    }
+
+    public static Vector3D<float> SweepPair(
+        Vector3D<float> beforeV1,
+        Vector3D<float> afterV1,
+        Vector3D<float> beforeV2,
+        Vector3D<float> afterV2
+    )
+    {
+        var v1b = beforeV1;
+        var v1a = afterV1;
+
+        var v2b = beforeV2;
+        var v2a = afterV2;
+
+        // Movement vectors
+        var v1Mov = v1a.Sub(v1b);
+        var v2Mov = v2a.Sub(v2b);
+        var deltaMov = v1Mov.Sub(v2Mov);
+
+        var P = new Vector3D<float>(0, 0, 0);
+        var A = v1b.Sub(v2b);
+        var B = A.Add(deltaMov);
+        return ProjectPointOntoSegment(P, A, B);
     }
 
     /*

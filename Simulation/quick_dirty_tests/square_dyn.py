@@ -12,10 +12,10 @@ from ngw.v1.ngw2d_pb2 import (
     ACTION_RIGHT_DOWN,
     ACTION_RIGHT_UP,
     ACTION_UP,
-    Action,
     DoStepRequest,
     DoStepResponse,
     DroneAction,
+    Event,
     ResetRequest,
     ResetResponse,
     StateResponse,
@@ -79,6 +79,7 @@ class EndlessRandomSquareSimulation:
         self.height = height
         self.target_x = target_x
         self.target_y = target_y
+        self.collision_set: set[int] = set()
 
         logging.info(f"Creating new simulation")
         response = self.client.new_square_map(
@@ -103,7 +104,7 @@ class EndlessRandomSquareSimulation:
 
     def progress(self) -> bool:
         if self.is_terminated():
-            logging.info(f"Simulation {self.state.sim_id} terminated, resetting")
+            self.collision_set = set()
             r = self.client.reset(self.state.sim_id)
             if has_error(r.state_response):
                 raise Exception(f"Exception resetting simulation {self.state.sim_id}: {r.state_response.error_message}")
@@ -114,6 +115,21 @@ class EndlessRandomSquareSimulation:
             raise Exception(f"Exception doing step of simulation {self.state.sim_id}: {r.state_response.error_message}")
 
         self.state = r.state_response.state
+
+        col_events = [e.collision_event for e in self.state.events if event_is_collision(e)]
+        all_col_ids = set([x for e in col_events for x in e.drone_ids])
+
+        # All the new collisions should be disjoint from collisions up to this point
+        if len(self.collision_set.intersection(all_col_ids)) != 0:
+            logging.error("Collision with an already dead drone just happened!")
+
+        self.collision_set = self.collision_set.union(all_col_ids)
+
+        for e in self.state.events:
+            if event_is_pursuer_entered_target(e):
+                logging.info("A pursuer entered the target area")
+            elif event_is_target_reached(e):
+                logging.info("An evader reached target area")
 
         return False
 
@@ -140,6 +156,17 @@ def random_action():
 
     return ACTION_NOTHING
 
+def event_is_collision(e: Event):
+    return e.WhichOneof("event_oneof") == "collision_event"
+
+def event_is_target_reached(e: Event):
+    return e.WhichOneof("event_oneof") == "target_reached_event"
+
+def event_is_out_of_bounds(e: Event):
+    return e.WhichOneof("event_oneof") == "out_of_bounds_event"
+
+def event_is_pursuer_entered_target(e: Event):
+    return e.WhichOneof("event_oneof") == "pursuer_entered_target_event"
 
 def has_error(response: StateResponse) -> bool:
     return response.WhichOneof("state_or_error") == "error_message"
@@ -154,7 +181,7 @@ def main() -> None:
     simulation = EndlessRandomSquareSimulation(chan=channel)
 
     while not simulation.progress():
-        time.sleep(.1)
+        # time.sleep(.1)
         pass
 
 

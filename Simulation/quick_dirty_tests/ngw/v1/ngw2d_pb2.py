@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12ngw/v1/ngw2d.proto\x12\x06ngw.v1\"T\n\nDroneState\x12\n\n\x02id\x18\x01 \x01(\x03\x12\t\n\x01x\x18\x02 \x01(\x03\x12\t\n\x01y\x18\x03 \x01(\x03\x12\x11\n\tdestroyed\x18\x04 \x01(\x08\x12\x11\n\tis_evader\x18\x05 \x01(\x08\"t\n\x05State\x12\x0e\n\x06sim_id\x18\x01 \x01(\x03\x12\x12\n\nterminated\x18\x02 \x01(\x08\x12(\n\x0c\x64rone_states\x18\x03 \x03(\x0b\x32\x12.ngw.v1.DroneState\x12\x1d\n\x06\x65vents\x18\x04 \x03(\x0b\x32\r.ngw.v1.Event\"\xbe\x01\n\x05\x45vent\x12\x31\n\x0f\x63ollision_event\x18\x01 \x01(\x0b\x32\x16.ngw.v1.CollisionEventH\x00\x12:\n\x14target_reached_event\x18\x02 \x01(\x0b\x32\x1a.ngw.v1.TargetReachedEventH\x00\x12\x37\n\x13out_of_bounds_event\x18\x03 \x01(\x0b\x32\x18.ngw.v1.OutOfBoundsEventH\x00\x42\r\n\x0b\x65vent_oneof\"#\n\x0e\x43ollisionEvent\x12\x11\n\tdrone_ids\x18\x01 \x03(\x03\"\'\n\x12TargetReachedEvent\x12\x11\n\tdrone_ids\x18\x01 \x03(\x03\"%\n\x10OutOfBoundsEvent\x12\x11\n\tdrone_ids\x18\x01 \x03(\x03\"?\n\x07MapSpec\x12\'\n\nsquare_map\x18\x01 \x01(\x0b\x32\x11.ngw.v1.SquareMapH\x00\x42\x0b\n\tmap_oneof\"N\n\tSquareMap\x12\r\n\x05width\x18\x01 \x01(\x03\x12\x0e\n\x06height\x18\x02 \x01(\x03\x12\x10\n\x08target_x\x18\x03 \x01(\x03\x12\x10\n\x08target_y\x18\x04 \x01(\x03\"K\n\x0b\x44roneAction\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x1e\n\x06\x61\x63tion\x18\x02 \x01(\x0e\x32\x0e.ngw.v1.Action\x12\x10\n\x08velocity\x18\x03 \x01(\x03\"Z\n\rStateResponse\x12\x1e\n\x05state\x18\x01 \x01(\x0b\x32\r.ngw.v1.StateH\x00\x12\x17\n\rerror_message\x18\x02 \x01(\tH\x00\x42\x10\n\x0estate_or_error\"K\n\rDoStepRequest\x12\x0e\n\x06sim_id\x18\x01 \x01(\x03\x12*\n\rdrone_actions\x18\x02 \x03(\x0b\x32\x13.ngw.v1.DroneAction\"?\n\x0e\x44oStepResponse\x12-\n\x0estate_response\x18\x01 \x01(\x0b\x32\x15.ngw.v1.StateResponse\"\x1e\n\x0cResetRequest\x12\x0e\n\x06sim_id\x18\x01 \x01(\x03\">\n\rResetResponse\x12-\n\x0estate_response\x18\x01 \x01(\x0b\x32\x15.ngw.v1.StateResponse\"\x1e\n\x0c\x43loseRequest\x12\x0e\n\x06sim_id\x18\x01 \x01(\x03\"=\n\rCloseResponse\x12\x1a\n\rerror_message\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x10\n\x0e_error_message\"o\n\nNewRequest\x12\x1c\n\x03map\x18\x01 \x01(\x0b\x32\x0f.ngw.v1.MapSpec\x12\x14\n\x0c\x65vader_count\x18\x02 \x01(\x03\x12\x15\n\rpursuer_count\x18\x03 \x01(\x03\x12\x16\n\x0e\x64rone_velocity\x18\x04 \x01(\x03\"<\n\x0bNewResponse\x12-\n\x0estate_response\x18\x01 \x01(\x0b\x32\x15.ngw.v1.StateResponse*\xd5\x01\n\x06\x41\x63tion\x12\x1e\n\x1a\x41\x43TION_UNKNOWN_UNSPECIFIED\x10\x00\x12\x12\n\x0e\x41\x43TION_NOTHING\x10\x01\x12\x0f\n\x0b\x41\x43TION_LEFT\x10\x02\x12\x12\n\x0e\x41\x43TION_LEFT_UP\x10\x03\x12\r\n\tACTION_UP\x10\x04\x12\x13\n\x0f\x41\x43TION_RIGHT_UP\x10\x05\x12\x10\n\x0c\x41\x43TION_RIGHT\x10\x06\x12\x15\n\x11\x41\x43TION_RIGHT_DOWN\x10\x07\x12\x0f\n\x0b\x41\x43TION_DOWN\x10\x08\x12\x14\n\x10\x41\x43TION_LEFT_DOWN\x10\t2\xf0\x01\n\x11SimulationService\x12\x39\n\x06\x44oStep\x12\x15.ngw.v1.DoStepRequest\x1a\x16.ngw.v1.DoStepResponse\"\x00\x12\x30\n\x03New\x12\x12.ngw.v1.NewRequest\x1a\x13.ngw.v1.NewResponse\"\x00\x12\x36\n\x05Reset\x12\x14.ngw.v1.ResetRequest\x1a\x15.ngw.v1.ResetResponse\"\x00\x12\x36\n\x05\x43lose\x12\x14.ngw.v1.CloseRequest\x1a\x15.ngw.v1.CloseResponse\"\x00\x42\n\xaa\x02\x07GW2D.V1b\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x12ngw/v1/ngw2d.proto\x12\x06ngw.v1\"T\n\nDroneState\x12\n\n\x02id\x18\x01 \x01(\x03\x12\t\n\x01x\x18\x02 \x01(\x03\x12\t\n\x01y\x18\x03 \x01(\x03\x12\x11\n\tdestroyed\x18\x04 \x01(\x08\x12\x11\n\tis_evader\x18\x05 \x01(\x08\"t\n\x05State\x12\x0e\n\x06sim_id\x18\x01 \x01(\x03\x12\x12\n\nterminated\x18\x02 \x01(\x08\x12(\n\x0c\x64rone_states\x18\x03 \x03(\x0b\x32\x12.ngw.v1.DroneState\x12\x1d\n\x06\x65vents\x18\x04 \x03(\x0b\x32\r.ngw.v1.Event\"\x89\x02\n\x05\x45vent\x12\x31\n\x0f\x63ollision_event\x18\x01 \x01(\x0b\x32\x16.ngw.v1.CollisionEventH\x00\x12:\n\x14target_reached_event\x18\x02 \x01(\x0b\x32\x1a.ngw.v1.TargetReachedEventH\x00\x12\x37\n\x13out_of_bounds_event\x18\x03 \x01(\x0b\x32\x18.ngw.v1.OutOfBoundsEventH\x00\x12I\n\x1cpursuer_entered_target_event\x18\x04 \x01(\x0b\x32!.ngw.v1.PursuerEnteredTargetEventH\x00\x42\r\n\x0b\x65vent_oneof\"#\n\x0e\x43ollisionEvent\x12\x11\n\tdrone_ids\x18\x01 \x03(\x03\"\'\n\x12TargetReachedEvent\x12\x11\n\tdrone_ids\x18\x01 \x03(\x03\"%\n\x10OutOfBoundsEvent\x12\x11\n\tdrone_ids\x18\x01 \x03(\x03\".\n\x19PursuerEnteredTargetEvent\x12\x11\n\tdrone_ids\x18\x01 \x03(\x03\"?\n\x07MapSpec\x12\'\n\nsquare_map\x18\x01 \x01(\x0b\x32\x11.ngw.v1.SquareMapH\x00\x42\x0b\n\tmap_oneof\"N\n\tSquareMap\x12\r\n\x05width\x18\x01 \x01(\x03\x12\x0e\n\x06height\x18\x02 \x01(\x03\x12\x10\n\x08target_x\x18\x03 \x01(\x03\x12\x10\n\x08target_y\x18\x04 \x01(\x03\"K\n\x0b\x44roneAction\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x1e\n\x06\x61\x63tion\x18\x02 \x01(\x0e\x32\x0e.ngw.v1.Action\x12\x10\n\x08velocity\x18\x03 \x01(\x03\"Z\n\rStateResponse\x12\x1e\n\x05state\x18\x01 \x01(\x0b\x32\r.ngw.v1.StateH\x00\x12\x17\n\rerror_message\x18\x02 \x01(\tH\x00\x42\x10\n\x0estate_or_error\"K\n\rDoStepRequest\x12\x0e\n\x06sim_id\x18\x01 \x01(\x03\x12*\n\rdrone_actions\x18\x02 \x03(\x0b\x32\x13.ngw.v1.DroneAction\"?\n\x0e\x44oStepResponse\x12-\n\x0estate_response\x18\x01 \x01(\x0b\x32\x15.ngw.v1.StateResponse\"\x1e\n\x0cResetRequest\x12\x0e\n\x06sim_id\x18\x01 \x01(\x03\">\n\rResetResponse\x12-\n\x0estate_response\x18\x01 \x01(\x0b\x32\x15.ngw.v1.StateResponse\"\x1e\n\x0c\x43loseRequest\x12\x0e\n\x06sim_id\x18\x01 \x01(\x03\"=\n\rCloseResponse\x12\x1a\n\rerror_message\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x10\n\x0e_error_message\"o\n\nNewRequest\x12\x1c\n\x03map\x18\x01 \x01(\x0b\x32\x0f.ngw.v1.MapSpec\x12\x14\n\x0c\x65vader_count\x18\x02 \x01(\x03\x12\x15\n\rpursuer_count\x18\x03 \x01(\x03\x12\x16\n\x0e\x64rone_velocity\x18\x04 \x01(\x03\"<\n\x0bNewResponse\x12-\n\x0estate_response\x18\x01 \x01(\x0b\x32\x15.ngw.v1.StateResponse*\xd5\x01\n\x06\x41\x63tion\x12\x1e\n\x1a\x41\x43TION_UNKNOWN_UNSPECIFIED\x10\x00\x12\x12\n\x0e\x41\x43TION_NOTHING\x10\x01\x12\x0f\n\x0b\x41\x43TION_LEFT\x10\x02\x12\x12\n\x0e\x41\x43TION_LEFT_UP\x10\x03\x12\r\n\tACTION_UP\x10\x04\x12\x13\n\x0f\x41\x43TION_RIGHT_UP\x10\x05\x12\x10\n\x0c\x41\x43TION_RIGHT\x10\x06\x12\x15\n\x11\x41\x43TION_RIGHT_DOWN\x10\x07\x12\x0f\n\x0b\x41\x43TION_DOWN\x10\x08\x12\x14\n\x10\x41\x43TION_LEFT_DOWN\x10\t2\xf0\x01\n\x11SimulationService\x12\x39\n\x06\x44oStep\x12\x15.ngw.v1.DoStepRequest\x1a\x16.ngw.v1.DoStepResponse\"\x00\x12\x30\n\x03New\x12\x12.ngw.v1.NewRequest\x1a\x13.ngw.v1.NewResponse\"\x00\x12\x36\n\x05Reset\x12\x14.ngw.v1.ResetRequest\x1a\x15.ngw.v1.ResetResponse\"\x00\x12\x36\n\x05\x43lose\x12\x14.ngw.v1.CloseRequest\x1a\x15.ngw.v1.CloseResponse\"\x00\x42\n\xaa\x02\x07GW2D.V1b\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -32,44 +32,46 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'ngw.v1.ngw2d_pb2', _globals
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
   _globals['DESCRIPTOR']._serialized_options = b'\252\002\007GW2D.V1'
-  _globals['_ACTION']._serialized_start=1367
-  _globals['_ACTION']._serialized_end=1580
+  _globals['_ACTION']._serialized_start=1490
+  _globals['_ACTION']._serialized_end=1703
   _globals['_DRONESTATE']._serialized_start=30
   _globals['_DRONESTATE']._serialized_end=114
   _globals['_STATE']._serialized_start=116
   _globals['_STATE']._serialized_end=232
   _globals['_EVENT']._serialized_start=235
-  _globals['_EVENT']._serialized_end=425
-  _globals['_COLLISIONEVENT']._serialized_start=427
-  _globals['_COLLISIONEVENT']._serialized_end=462
-  _globals['_TARGETREACHEDEVENT']._serialized_start=464
-  _globals['_TARGETREACHEDEVENT']._serialized_end=503
-  _globals['_OUTOFBOUNDSEVENT']._serialized_start=505
-  _globals['_OUTOFBOUNDSEVENT']._serialized_end=542
-  _globals['_MAPSPEC']._serialized_start=544
-  _globals['_MAPSPEC']._serialized_end=607
-  _globals['_SQUAREMAP']._serialized_start=609
-  _globals['_SQUAREMAP']._serialized_end=687
-  _globals['_DRONEACTION']._serialized_start=689
-  _globals['_DRONEACTION']._serialized_end=764
-  _globals['_STATERESPONSE']._serialized_start=766
-  _globals['_STATERESPONSE']._serialized_end=856
-  _globals['_DOSTEPREQUEST']._serialized_start=858
-  _globals['_DOSTEPREQUEST']._serialized_end=933
-  _globals['_DOSTEPRESPONSE']._serialized_start=935
-  _globals['_DOSTEPRESPONSE']._serialized_end=998
-  _globals['_RESETREQUEST']._serialized_start=1000
-  _globals['_RESETREQUEST']._serialized_end=1030
-  _globals['_RESETRESPONSE']._serialized_start=1032
-  _globals['_RESETRESPONSE']._serialized_end=1094
-  _globals['_CLOSEREQUEST']._serialized_start=1096
-  _globals['_CLOSEREQUEST']._serialized_end=1126
-  _globals['_CLOSERESPONSE']._serialized_start=1128
-  _globals['_CLOSERESPONSE']._serialized_end=1189
-  _globals['_NEWREQUEST']._serialized_start=1191
-  _globals['_NEWREQUEST']._serialized_end=1302
-  _globals['_NEWRESPONSE']._serialized_start=1304
-  _globals['_NEWRESPONSE']._serialized_end=1364
-  _globals['_SIMULATIONSERVICE']._serialized_start=1583
-  _globals['_SIMULATIONSERVICE']._serialized_end=1823
+  _globals['_EVENT']._serialized_end=500
+  _globals['_COLLISIONEVENT']._serialized_start=502
+  _globals['_COLLISIONEVENT']._serialized_end=537
+  _globals['_TARGETREACHEDEVENT']._serialized_start=539
+  _globals['_TARGETREACHEDEVENT']._serialized_end=578
+  _globals['_OUTOFBOUNDSEVENT']._serialized_start=580
+  _globals['_OUTOFBOUNDSEVENT']._serialized_end=617
+  _globals['_PURSUERENTEREDTARGETEVENT']._serialized_start=619
+  _globals['_PURSUERENTEREDTARGETEVENT']._serialized_end=665
+  _globals['_MAPSPEC']._serialized_start=667
+  _globals['_MAPSPEC']._serialized_end=730
+  _globals['_SQUAREMAP']._serialized_start=732
+  _globals['_SQUAREMAP']._serialized_end=810
+  _globals['_DRONEACTION']._serialized_start=812
+  _globals['_DRONEACTION']._serialized_end=887
+  _globals['_STATERESPONSE']._serialized_start=889
+  _globals['_STATERESPONSE']._serialized_end=979
+  _globals['_DOSTEPREQUEST']._serialized_start=981
+  _globals['_DOSTEPREQUEST']._serialized_end=1056
+  _globals['_DOSTEPRESPONSE']._serialized_start=1058
+  _globals['_DOSTEPRESPONSE']._serialized_end=1121
+  _globals['_RESETREQUEST']._serialized_start=1123
+  _globals['_RESETREQUEST']._serialized_end=1153
+  _globals['_RESETRESPONSE']._serialized_start=1155
+  _globals['_RESETRESPONSE']._serialized_end=1217
+  _globals['_CLOSEREQUEST']._serialized_start=1219
+  _globals['_CLOSEREQUEST']._serialized_end=1249
+  _globals['_CLOSERESPONSE']._serialized_start=1251
+  _globals['_CLOSERESPONSE']._serialized_end=1312
+  _globals['_NEWREQUEST']._serialized_start=1314
+  _globals['_NEWREQUEST']._serialized_end=1425
+  _globals['_NEWRESPONSE']._serialized_start=1427
+  _globals['_NEWRESPONSE']._serialized_end=1487
+  _globals['_SIMULATIONSERVICE']._serialized_start=1706
+  _globals['_SIMULATIONSERVICE']._serialized_end=1946
 # @@protoc_insertion_point(module_scope)

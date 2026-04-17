@@ -186,6 +186,8 @@ public class GWSimulationInstance(
         List<long> inTarget = [];
         foreach (var (drone, before, after) in zipped)
         {
+            if (drone.IsEvader) continue;
+
             foreach (var tp in targetPositions)
             {
                 var target = new Vector3D<float>(tp.X, 0, tp.Y);

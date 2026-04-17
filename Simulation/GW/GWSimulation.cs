@@ -369,7 +369,7 @@ public class GWSimulationInstance(
                 _attackers.Concat(_defenders).Select(e => new DroneState {
                     Destroyed = e.Destroyed,
                     X = e.X,
-                    Y = e.Z,
+                    Y = e.Y,
                     Id = e.Id,
                     IsEvader = e.IsEvader
                 })

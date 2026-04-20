@@ -262,8 +262,8 @@ public class GWSimulationInstance(
         List<long> ids = [];
         foreach (var (drone, _, after) in zipped)
         {
-            _positionUtility.IsInBounds(_mapSpec, new Vector3I(after.X, 0, after.Y));
-            ids.Add(drone.Id);
+            if (!_positionUtility.IsInBounds(_mapSpec, new Vector3I(after.X, 0, after.Y)))
+                ids.Add(drone.Id);
         }
 
         var outOfbounds = new OutOfBoundsEvent()

@@ -16,7 +16,7 @@ public static class ObjectUtility
             _ => throw new Exception($"Did not recognize one of case: {objectSpec.ObjectOneofCase}")
         };
     }
-    
+
     public static Vector3I GetPosition(this SquareObject objectSpec)
     {
         return new((int)objectSpec.X, 0, (int)objectSpec.Y);

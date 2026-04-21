@@ -103,7 +103,7 @@ public class GWSimulationInstance(
     long simId
 ) : IDisposable
 {
-    // This distance an be very low as all collisions with static objects/static targets
+    // This distance can be very low as all collisions with static objects/static targets
     // will exactly pass through their point (origin in relative space).
     private const float AREA_COLLISION_THRESHOLD = 1e-2f;
 

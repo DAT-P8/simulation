@@ -94,17 +94,24 @@ public class PositionUtility(Random random, ILogger logger) : IPositionUtility
     private List<Vector3I> GetSpawnPositions(SquareMap squareMap, int count, bool isAttacker)
     {
         HashSet<Position> positions = [];
+        int itCount = 0;
 
         if (isAttacker)
         {
             while (positions.Count < count)
             {
+                itCount++;
+                if (itCount >= 1001)
+                    throw new Exception("Reached max iteration count for generating spawn positions");
                 var pos = GetSquareMapAttackerSpawn(squareMap);
 
                 if (IsOnTarget(squareMap, pos))
                     continue;
 
                 if (!IsInBounds(squareMap, pos))
+                    continue;
+
+                if (IsOnObject(squareMap, pos))
                     continue;
 
                 positions.Add(new(pos.X, pos.Y, pos.Z));
@@ -117,12 +124,19 @@ public class PositionUtility(Random random, ILogger logger) : IPositionUtility
 
             while (positions.Count < count)
             {
+                itCount++;
+                if (itCount >= 1001)
+                    throw new Exception("Reached max iteration count for generating spawn positions");
+
                 var pos = GetSquareMapDefenderSpawn(squareMap, maxRadius);
 
                 if (IsOnTarget(squareMap, pos))
                     continue;
 
                 if (!IsInBounds(squareMap, pos))
+                    continue;
+
+                if (IsOnObject(squareMap, pos))
                     continue;
 
                 positions.Add(new(pos.X, pos.Y, pos.Z));
@@ -147,6 +161,29 @@ public class PositionUtility(Random random, ILogger logger) : IPositionUtility
     {
         // Same height as drones are spawned in
         return [new((int)mapSpec.TargetX, 1, (int)mapSpec.TargetY)];
+    }
+
+    public bool IsOnObject(MapSpec mapSpec, Vector3I position)
+    {
+        return mapSpec.MapOneofCase switch
+        {
+            MapSpec.MapOneofOneofCase.SquareMap => IsOnObject(mapSpec.SquareMap, position),
+            MapSpec.MapOneofOneofCase.None => throw new Exception("Got MapSpec None"),
+            _ => throw new Exception($"Did not recognize MapSpec: {mapSpec.MapOneofCase}"),
+        };
+        throw new NotImplementedException();
+    }
+
+    private bool IsOnObject(SquareMap mapSpec, Vector3I position)
+    {
+        var positionSet = mapSpec
+            .Objects
+            .Select(e => e.GetPosition())
+            .Select(e => new Position(e.X, e.Y, e.Z))
+            .ToHashSet();
+        var p = new Position(position.X, position.Y, position.Z);
+
+        return positionSet.Contains(p);
     }
 
     // Introduce record for equality-based comparison

@@ -99,16 +99,32 @@ class MapSpec(_message.Message):
     def __init__(self, square_map: _Optional[_Union[SquareMap, _Mapping]] = ...) -> None: ...
 
 class SquareMap(_message.Message):
-    __slots__ = ("width", "height", "target_x", "target_y")
+    __slots__ = ("width", "height", "target_x", "target_y", "objects")
     WIDTH_FIELD_NUMBER: _ClassVar[int]
     HEIGHT_FIELD_NUMBER: _ClassVar[int]
     TARGET_X_FIELD_NUMBER: _ClassVar[int]
     TARGET_Y_FIELD_NUMBER: _ClassVar[int]
+    OBJECTS_FIELD_NUMBER: _ClassVar[int]
     width: int
     height: int
     target_x: int
     target_y: int
-    def __init__(self, width: _Optional[int] = ..., height: _Optional[int] = ..., target_x: _Optional[int] = ..., target_y: _Optional[int] = ...) -> None: ...
+    objects: _containers.RepeatedCompositeFieldContainer[ObjectSpec]
+    def __init__(self, width: _Optional[int] = ..., height: _Optional[int] = ..., target_x: _Optional[int] = ..., target_y: _Optional[int] = ..., objects: _Optional[_Iterable[_Union[ObjectSpec, _Mapping]]] = ...) -> None: ...
+
+class ObjectSpec(_message.Message):
+    __slots__ = ("square_object",)
+    SQUARE_OBJECT_FIELD_NUMBER: _ClassVar[int]
+    square_object: SquareObject
+    def __init__(self, square_object: _Optional[_Union[SquareObject, _Mapping]] = ...) -> None: ...
+
+class SquareObject(_message.Message):
+    __slots__ = ("x", "y")
+    X_FIELD_NUMBER: _ClassVar[int]
+    Y_FIELD_NUMBER: _ClassVar[int]
+    x: int
+    y: int
+    def __init__(self, x: _Optional[int] = ..., y: _Optional[int] = ...) -> None: ...
 
 class DroneAction(_message.Message):
     __slots__ = ("id", "action", "velocity")

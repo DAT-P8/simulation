@@ -16,8 +16,10 @@ from ngw.v1.ngw2d_pb2 import (
     DoStepResponse,
     DroneAction,
     Event,
+    ObjectSpec,
     ResetRequest,
     ResetResponse,
+    SquareObject,
     StateResponse,
     MapSpec,
     NewRequest,
@@ -41,11 +43,20 @@ class SimulationClient:
         width: int = 3,
         height: int = 3,
         target_x: int = 1,
-        target_y: int = 1
+        target_y: int = 1,
+        objects: list[tuple[int, int]] = []
     ) -> NewResponse:
+        dto_objects = [ObjectSpec(square_object=SquareObject(x=x, y=y)) for x, y in objects]
         square_map = MapSpec(
-            square_map=SquareMap(width=width, height=height, target_x=target_x, target_y=target_y)
+            square_map=SquareMap(
+                width=width,
+                height=height,
+                target_x=target_x,
+                target_y=target_y,
+                objects=dto_objects
+            )
         )
+
         return self.stub.New(NewRequest(
             map=square_map,
             evader_count=evader_count,
@@ -90,6 +101,7 @@ class EndlessRandomSquareSimulation:
             height=self.height,
             target_x=self.target_x,
             target_y=self.target_y,
+            objects=[(0,0), (1,1), (2,2), (3,3), (4,4), (5,5), (6,6), (7,7), (8,8), (9,9)]
         )
         if has_error(response.state_response):
             raise Exception(f"Failed initializing new simulation: {response.state_response.error_message}")
@@ -181,7 +193,7 @@ def main() -> None:
     simulation = EndlessRandomSquareSimulation(chan=channel)
 
     while not simulation.progress():
-        # time.sleep(.1)
+        time.sleep(.5)
         pass
 
 

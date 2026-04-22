@@ -103,7 +103,9 @@ public class GWSimulationInstance(
     long simId
 ) : IDisposable
 {
-    private const float AREA_COLLISION_THRESHOLD = 0.5f;
+    // This distance can be very low as all collisions with static objects/static targets
+    // will exactly pass through their point (origin in relative space).
+    private const float AREA_COLLISION_THRESHOLD = 1e-2f;
 
     private readonly List<GWDrone> _defenders = defenders;
     private readonly List<GWDrone> _attackers = attackers;
@@ -135,22 +137,26 @@ public class GWSimulationInstance(
             .ToList();
 
         var collisions = CollisionCheck(zipped);
+        var collisionsWithObjects = CollisionWithObjectsCheck(zipped);
         var outOfBounds = BoundsCheck(zipped);
         var targetReached = TargetCheck(zipped);
         var defenderEnteredTarget = PursuerEnteredTargetCheck(zipped);
 
+        collisionsWithObjects = RemoveCollidedFromObjectCollisions(collisionsWithObjects, collisions);
         outOfBounds = RemoveCollidedFromOutOfBounds(collisions, outOfBounds);
         defenderEnteredTarget = RemoveCollidedFromPursuerEnteredTarget(collisions, defenderEnteredTarget);
         targetReached = RemoveCollidedFromTargetReached(collisions, targetReached);
 
         var toDestroy = collisions
             .SelectMany(e => e.DroneIds)
-            .Concat(outOfBounds.DroneIds);
+            .Concat(outOfBounds.DroneIds)
+            .Concat(collisionsWithObjects.DroneIds);
 
         foreach (var id in toDestroy)
         {
             var drone = drones.FirstOrDefault(e => e.Id == id) ??
                 throw new Exception($"Did not find a drone with id: {id}");
+
             drone.Destroyed = true;
         }
 
@@ -163,6 +169,47 @@ public class GWSimulationInstance(
             events.AddRange(collisions.Select(e => new Event { CollisionEvent = e }));
 
         return Task.FromResult(GetState(events));
+    }
+
+    private DroneObjectCollisionEvent RemoveCollidedFromObjectCollisions(DroneObjectCollisionEvent collisionsWithObjects, List<CollisionEvent> collisions)
+    {
+        var collisionSet = collisions.SelectMany(e => e.DroneIds).ToHashSet();
+        var collisionObjectSet = collisionsWithObjects.DroneIds.ToHashSet();
+
+        var newSet = collisionObjectSet.ToHashSet();
+        foreach (var id in collisionSet.Intersect(collisionObjectSet))
+        {
+            newSet.Remove(id);
+        }
+
+        return new DroneObjectCollisionEvent { DroneIds = { newSet } };
+    }
+
+    private DroneObjectCollisionEvent CollisionWithObjectsCheck(List<(GWDrone drone, Vector2I before, Vector2I after)> zipped)
+    {
+        var objects = _mapSpec.GetObjects();
+        var objectPositions = objects
+            .Select(e => e.GetPosition())
+            .Select(e => new Vector3D<float>(e.X, e.Y, e.Z))
+            .ToList();
+
+        List<long> ids = [];
+        foreach (var (drone, before, after) in zipped)
+        {
+            var beforeVec = new Vector3D<float>(before.X, 0, before.Y);
+            var afterVec = new Vector3D<float>(after.X, 0, after.Y);
+            foreach (var objectPos in objectPositions)
+            {
+                var point = VectorExtensions.SweepPair(beforeVec, afterVec, objectPos, objectPos);
+                if (point.Dot(point) <= AREA_COLLISION_THRESHOLD)
+                {
+                    ids.Add(drone.Id);
+                    break;
+                }
+            }
+        }
+
+        return new DroneObjectCollisionEvent { DroneIds = { ids } };
     }
 
     private PursuerEnteredTargetEvent RemoveCollidedFromPursuerEnteredTarget(List<CollisionEvent> collisions, PursuerEnteredTargetEvent defenderEnteredTarget)
@@ -187,12 +234,12 @@ public class GWSimulationInstance(
         foreach (var (drone, before, after) in zipped)
         {
             if (drone.IsEvader) continue;
+            var b = new Vector3D<float>(before.X, 0, before.Y);
+            var a = new Vector3D<float>(after.X, 0, after.Y);
 
             foreach (var tp in targetPositions)
             {
                 var target = new Vector3D<float>(tp.X, 0, tp.Y);
-                var b = new Vector3D<float>(before.X, 0, before.Y);
-                var a = new Vector3D<float>(after.X, 0, after.Y);
                 var point = VectorExtensions.SweepPair(b, a, target, target);
 
                 if (point.Dot(point) <= AREA_COLLISION_THRESHOLD)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Godot;
 using GW2D.V1;
 using Serilog;
@@ -13,6 +14,7 @@ public class MapSpawner(ILogger logger, ICameraController cameraController) : IM
     private readonly PackedScene _greenTile = GD.Load<PackedScene>("res://green_tile.tscn");
     private readonly PackedScene _greyTile = GD.Load<PackedScene>("res://grey_tile.tscn");
     private readonly PackedScene _redTile = GD.Load<PackedScene>("res://red_tile.tscn");
+    private readonly PackedScene _blueTile = GD.Load<PackedScene>("res://blue_tile.tscn");
 
     private readonly List<Node3D> _tiles = [];
 
@@ -32,19 +34,32 @@ public class MapSpawner(ILogger logger, ICameraController cameraController) : IM
     {
         var sqmap = new RSquareMap((int)squareMap.Width, (int)squareMap.Height, (int)squareMap.TargetX, (int)squareMap.TargetY);
 
+
         if (!_squareMaps.TryAdd(sqmap, 1))
             _squareMaps[sqmap] += 1;
 
         if (_squareMaps[sqmap] == 1)
         {
+            var targetPos = new Position(sqmap.TargetX, sqmap.TargetY);
+            var objectPositions = squareMap.Objects.Select(e =>
+                {
+                    var p = e.GetPosition();
+                    return new Position(p.X, p.Z);
+                })
+                .ToHashSet();
+
             for (int x = -1; x <= sqmap.Width; x++)
             {
                 for (int y = -1; y <= sqmap.Height; y++)
                 {
+                    var position = new Position(x, y);
+
                     Node3D tile;
-                    if (x == sqmap.TargetX && y == sqmap.TargetY)
+                    if (position == targetPos)
                         tile = _redTile.Instantiate<Node3D>();
                     else if (x == -1 || x == sqmap.Width || y == -1 || y == sqmap.Height)
+                        tile = _blueTile.Instantiate<Node3D>();
+                    else if (objectPositions.Any(e => e == position))
                         tile = _greyTile.Instantiate<Node3D>();
                     else
                         tile = _greenTile.Instantiate<Node3D>();
@@ -64,4 +79,5 @@ public class MapSpawner(ILogger logger, ICameraController cameraController) : IM
 
     // Introduced to ensure value-based equality comparisons in dictionaries.
     private record RSquareMap(int Width, int Height, int TargetX, int TargetY);
+    private record Position(int X, int Y);
 }

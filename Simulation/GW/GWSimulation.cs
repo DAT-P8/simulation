@@ -42,12 +42,12 @@ public class GWSimulation(ILogger logger, IDroneSpawner droneSpawner, IMapSpawne
         return state;
     }
 
-    public async Task<State> New(MapSpec mapSpec, int evaders, int pursuers, int drone_velocity)
+    public async Task<State> New(MapSpec mapSpec, int evaders, int pursuers)
     {
         if (_instance is not null)
             throw new Exception("Attempted override an existing simulation!");
 
-        var (state, newInstance) = await CreateNewSimulation(pursuers, evaders, drone_velocity, mapSpec);
+        var (state, newInstance) = await CreateNewSimulation(pursuers, evaders, mapSpec);
         _instance = newInstance;
 
         return state;
@@ -68,20 +68,20 @@ public class GWSimulation(ILogger logger, IDroneSpawner droneSpawner, IMapSpawne
         _instance?.Dispose();
     }
 
-    private async Task<(State, GWSimulationInstance)> CreateNewSimulation(int defenders, int attackers, int velocity, MapSpec mapSpec)
+    private async Task<(State, GWSimulationInstance)> CreateNewSimulation(int defenders, int attackers, MapSpec mapSpec)
     {
         List<GWDrone> defenderDrones = new(defenders);
         List<GWDrone> attackerDrones = new(attackers);
 
         for (int i = 0; i < defenders; i++)
         {
-            var d = _droneSpawner.SpawnDrone(i, velocity, false);
+            var d = _droneSpawner.SpawnDrone(i, false);
             defenderDrones.Add(d);
         }
 
         for (int i = defenders; i < attackers + defenders; i++)
         {
-            var a = _droneSpawner.SpawnDrone(i, velocity, true);
+            var a = _droneSpawner.SpawnDrone(i, true);
             attackerDrones.Add(a);
         }
 

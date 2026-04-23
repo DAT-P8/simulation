@@ -4,5 +4,5 @@ namespace Simulation.Services;
 
 public interface IDroneSpawner
 {
-    GWDrone SpawnDrone(int id, int velocity, bool isAttacker);
+    GWDrone SpawnDrone(int id, bool isAttacker);
 }

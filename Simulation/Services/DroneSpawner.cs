@@ -8,7 +8,7 @@ public class DroneSpawner : IDroneSpawner
     private readonly PackedScene _droneDefenderScene = GD.Load<PackedScene>("res://gw_drone.tscn");
     private readonly PackedScene _droneAttackerScene = GD.Load<PackedScene>("res://gw_drone_evader.tscn");
 
-    public GWDrone SpawnDrone(int id, int velocity, bool isAttacker)
+    public GWDrone SpawnDrone(int id, bool isAttacker)
     {
         PackedScene scene;
         if (isAttacker)

@@ -60,8 +60,7 @@ class SimulationClient:
         return self.stub.New(NewRequest(
             map=square_map,
             evader_count=evader_count,
-            pursuer_count=pursuer_count,
-            drone_velocity=drone_velocity,
+            pursuer_count=pursuer_count
         ))
 
     def do_step(self, sim_id: int, actions: list[DroneAction]) -> DoStepResponse:
@@ -128,20 +127,17 @@ class EndlessRandomSquareSimulation:
 
         self.state = r.state_response.state
 
-        col_events = [e.collision_event for e in self.state.events if event_is_collision(e)]
-        all_col_ids = set([x for e in col_events for x in e.drone_ids])
-
-        # All the new collisions should be disjoint from collisions up to this point
-        if len(self.collision_set.intersection(all_col_ids)) != 0:
-            logging.error("Collision with an already dead drone just happened!")
-
-        self.collision_set = self.collision_set.union(all_col_ids)
+          # oneof event_oneof {
+          #   CollisionEvent collision_event = 1;
+          #   TargetReachedEvent target_reached_event = 2;
+          #   OutOfBoundsEvent out_of_bounds_event = 3;
+          #   PursuerEnteredTargetEvent pursuer_entered_target_event = 4;
+          #   DroneObjectCollisionEvent drone_object_collision_event = 5;
+          # }
 
         for e in self.state.events:
-            if event_is_pursuer_entered_target(e):
-                logging.info("A pursuer entered the target area")
-            elif event_is_target_reached(e):
-                logging.info("An evader reached target area")
+            whichoneof = e.WhichOneof("event_oneof")
+            print(whichoneof)
 
         return False
 
@@ -193,7 +189,7 @@ def main() -> None:
     simulation = EndlessRandomSquareSimulation(chan=channel)
 
     while not simulation.progress():
-        time.sleep(.5)
+        # time.sleep(.5)
         pass
 
 

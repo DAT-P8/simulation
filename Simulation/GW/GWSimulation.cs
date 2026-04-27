@@ -167,6 +167,10 @@ public class GWSimulationInstance(
             events.Add(new Event { TargetReachedEvent = targetReached });
         if (collisions.Any(e => e.DroneIds.Count != 0))
             events.AddRange(collisions.Select(e => new Event { CollisionEvent = e }));
+        if (defenderEnteredTarget.DroneIds.Count != 0)
+            events.Add(new Event { PursuerEnteredTargetEvent = defenderEnteredTarget });
+        if (collisionsWithObjects.DroneIds.Count != 0)
+            events.Add(new Event { DroneObjectCollisionEvent = collisionsWithObjects });
 
         return Task.FromResult(GetState(events));
     }

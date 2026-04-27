@@ -57,16 +57,24 @@ class State(_message.Message):
     def __init__(self, sim_id: _Optional[int] = ..., terminated: bool = ..., drone_states: _Optional[_Iterable[_Union[DroneState, _Mapping]]] = ..., events: _Optional[_Iterable[_Union[Event, _Mapping]]] = ...) -> None: ...
 
 class Event(_message.Message):
-    __slots__ = ("collision_event", "target_reached_event", "out_of_bounds_event", "pursuer_entered_target_event")
+    __slots__ = ("collision_event", "target_reached_event", "out_of_bounds_event", "pursuer_entered_target_event", "drone_object_collision_event")
     COLLISION_EVENT_FIELD_NUMBER: _ClassVar[int]
     TARGET_REACHED_EVENT_FIELD_NUMBER: _ClassVar[int]
     OUT_OF_BOUNDS_EVENT_FIELD_NUMBER: _ClassVar[int]
     PURSUER_ENTERED_TARGET_EVENT_FIELD_NUMBER: _ClassVar[int]
+    DRONE_OBJECT_COLLISION_EVENT_FIELD_NUMBER: _ClassVar[int]
     collision_event: CollisionEvent
     target_reached_event: TargetReachedEvent
     out_of_bounds_event: OutOfBoundsEvent
     pursuer_entered_target_event: PursuerEnteredTargetEvent
-    def __init__(self, collision_event: _Optional[_Union[CollisionEvent, _Mapping]] = ..., target_reached_event: _Optional[_Union[TargetReachedEvent, _Mapping]] = ..., out_of_bounds_event: _Optional[_Union[OutOfBoundsEvent, _Mapping]] = ..., pursuer_entered_target_event: _Optional[_Union[PursuerEnteredTargetEvent, _Mapping]] = ...) -> None: ...
+    drone_object_collision_event: DroneObjectCollisionEvent
+    def __init__(self, collision_event: _Optional[_Union[CollisionEvent, _Mapping]] = ..., target_reached_event: _Optional[_Union[TargetReachedEvent, _Mapping]] = ..., out_of_bounds_event: _Optional[_Union[OutOfBoundsEvent, _Mapping]] = ..., pursuer_entered_target_event: _Optional[_Union[PursuerEnteredTargetEvent, _Mapping]] = ..., drone_object_collision_event: _Optional[_Union[DroneObjectCollisionEvent, _Mapping]] = ...) -> None: ...
+
+class DroneObjectCollisionEvent(_message.Message):
+    __slots__ = ("drone_ids",)
+    DRONE_IDS_FIELD_NUMBER: _ClassVar[int]
+    drone_ids: _containers.RepeatedScalarFieldContainer[int]
+    def __init__(self, drone_ids: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class CollisionEvent(_message.Message):
     __slots__ = ("drone_ids",)
@@ -183,16 +191,14 @@ class CloseResponse(_message.Message):
     def __init__(self, error_message: _Optional[str] = ...) -> None: ...
 
 class NewRequest(_message.Message):
-    __slots__ = ("map", "evader_count", "pursuer_count", "drone_velocity")
+    __slots__ = ("map", "evader_count", "pursuer_count")
     MAP_FIELD_NUMBER: _ClassVar[int]
     EVADER_COUNT_FIELD_NUMBER: _ClassVar[int]
     PURSUER_COUNT_FIELD_NUMBER: _ClassVar[int]
-    DRONE_VELOCITY_FIELD_NUMBER: _ClassVar[int]
     map: MapSpec
     evader_count: int
     pursuer_count: int
-    drone_velocity: int
-    def __init__(self, map: _Optional[_Union[MapSpec, _Mapping]] = ..., evader_count: _Optional[int] = ..., pursuer_count: _Optional[int] = ..., drone_velocity: _Optional[int] = ...) -> None: ...
+    def __init__(self, map: _Optional[_Union[MapSpec, _Mapping]] = ..., evader_count: _Optional[int] = ..., pursuer_count: _Optional[int] = ...) -> None: ...
 
 class NewResponse(_message.Message):
     __slots__ = ("state_response",)

@@ -42,7 +42,7 @@ public class GWSimulation(ILogger logger, IDroneSpawner droneSpawner, IMapSpawne
         return state;
     }
 
-    public async Task<State> New(MapSpec mapSpec, int evaders, int pursuers, int drone_velocity)
+    public async Task<State> New(MapSpec mapSpec, int evaders, int pursuers, int drone_velocity = 1)
     {
         if (_instance is not null)
             throw new Exception("Attempted override an existing simulation!");

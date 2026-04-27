@@ -113,8 +113,7 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
         var state = await newSim.New(
             request.Map,
             (int)request.EvaderCount,
-            (int)request.PursuerCount,
-            (int)request.DroneVelocity
+            (int)request.PursuerCount
         );
 
         return new NewResponse

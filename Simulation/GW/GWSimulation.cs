@@ -165,6 +165,8 @@ public class GWSimulationInstance(
             events.Add(new Event { OutOfBoundsEvent = outOfBounds });
         if (targetReached.DroneIds.Count != 0)
             events.Add(new Event { TargetReachedEvent = targetReached });
+        if (collisionsWithObjects.DroneIds.Count != 0)
+            events.Add(new Event { DroneObjectCollisionEvent = collisionsWithObjects });
         if (collisions.Any(e => e.DroneIds.Count != 0))
             events.AddRange(collisions.Select(e => new Event { CollisionEvent = e }));
         if (defenderEnteredTarget.DroneIds.Count != 0)
@@ -416,6 +418,7 @@ public class GWSimulationInstance(
             Events = { events },
             Terminated = terminated,
             SimId = _simId,
+            Objects = { _mapSpec.GetObjects() },
             DroneStates = {
                 _attackers.Concat(_defenders).Select(e => new DroneState {
                     Destroyed = e.Destroyed,

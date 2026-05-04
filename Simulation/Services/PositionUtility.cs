@@ -4,6 +4,7 @@ using System.Linq;
 using Godot;
 using GW2D.V1;
 using Serilog;
+using Simulation.Utils;
 
 namespace Simulation.Services;
 
@@ -12,14 +13,84 @@ public class PositionUtility(Random random, ILogger logger) : IPositionUtility
     private readonly Random _random = random;
     private readonly ILogger _logger = logger;
 
-    public List<Vector3I> GetSpawnPositions(MapSpec mapSpec, int count, bool isAttacker)
+    public List<Vector3I> GetDefenderSpawn(MapSpec mapSpec, int count)
     {
         return mapSpec.MapOneofCase switch
         {
-            MapSpec.MapOneofOneofCase.SquareMap => GetSpawnPositions(mapSpec.SquareMap, count, isAttacker),
+            MapSpec.MapOneofOneofCase.SquareMap => GetDefenderSpawn(mapSpec.SquareMap, count),
             MapSpec.MapOneofOneofCase.None => throw new Exception("Map is None, cannot generate position(s)."),
             _ => throw new Exception($"Did not recognize map type: {mapSpec.MapOneofCase}"),
         };
+    }
+
+    public List<Vector3I> GetDefenderSpawn(SquareMap squareMap, int nDefenders)
+    {
+        // Make sure radius is big enough to spawn the amount of defenders
+        int maxRadius = (int)Math.Ceiling(Math.Sqrt(nDefenders)) + 2;
+        Vector3I targetPos = new((int)squareMap.TargetX, 0, (int)squareMap.TargetY);
+
+        List<Vector3I> validSpawns = [];
+        for (int i = -maxRadius; i <= maxRadius; i++)
+        {
+            for (int j = -maxRadius; j <= maxRadius; j++)
+            {
+                Vector3I pos = new Vector3I(i, 0, j) + targetPos;
+                if (!ValidSpawn(squareMap, pos))
+                    continue;
+                validSpawns.Add(pos);
+            }
+        }
+        validSpawns = Shuffler.Shuffle(_random, validSpawns);
+        return [.. validSpawns.Take(nDefenders)];
+    }
+
+    public List<Vector3I> GetAttackerSpawn(MapSpec mapSpec, int count)
+    {
+        return mapSpec.MapOneofCase switch
+        {
+            MapSpec.MapOneofOneofCase.SquareMap => GetAttackerSpawn(mapSpec.SquareMap, count),
+            MapSpec.MapOneofOneofCase.None => throw new Exception("Map is None, cannot generate position(s)."),
+            _ => throw new Exception($"Did not recognize map type: {mapSpec.MapOneofCase}"),
+        };
+    }
+
+    public List<Vector3I> GetAttackerSpawn(SquareMap squareMap, int nAttackers)
+    {
+        int height = (int)squareMap.Height;
+        int width = (int)squareMap.Width;
+
+        List<Vector3I> validSpawns = [];
+        // Side spawns
+        for (int y = 0; y <= height; y++)
+        {
+            foreach (int x in (int[])[0, width])
+            {
+                Vector3I pos = new(x, 0, y);
+                if (!ValidSpawn(squareMap, pos))
+                    continue;
+                validSpawns.Add(pos);
+            }
+        }
+        // Top and bottom spawns
+        for (int x = 0; x <= width; x++)
+        {
+            foreach (int y in (int[])[1, height - 1])
+            {
+                Vector3I pos = new(x, 0, y);
+                if (!ValidSpawn(squareMap, pos))
+                    continue;
+                validSpawns.Add(pos);
+            }
+        }
+        validSpawns = Shuffler.Shuffle(_random, validSpawns);
+        return [.. validSpawns.Take(nAttackers)];
+    }
+
+    private bool ValidSpawn(SquareMap mapSpec, Vector3I pos)
+    {
+        if (IsOnTarget(mapSpec, pos) || !IsInBounds(mapSpec, pos) || IsOnObject(mapSpec, pos))
+            return false;
+        return true;
     }
 
     public bool IsInBounds(MapSpec mapSpec, Vector3I position)
@@ -51,99 +122,7 @@ public class PositionUtility(Random random, ILogger logger) : IPositionUtility
 
     private bool IsInBounds(SquareMap mapSpec, Vector3I position)
     {
-        return position.X >= 0 && position.Z >= 0 && position.X < mapSpec.Width && position.Z < mapSpec.Height;
-    }
-
-    private Vector3I GetSquareMapAttackerSpawn(SquareMap squareMap)
-    {
-        var randQuadrant = _random.Next(0, 4);
-
-        // Left
-        if (randQuadrant <= 0)
-        {
-            var y = _random.Next(0, (int)squareMap.Height);
-            return new(0, 0, y);
-        }
-        // Right
-        else if (randQuadrant <= 1)
-        {
-            var y = _random.Next(0, (int)squareMap.Height);
-            return new((int)squareMap.Width - 1, 0, y);
-        }
-        // Down
-        else if (randQuadrant <= 2)
-        {
-            var x = _random.Next(0, (int)squareMap.Width);
-            return new(x, 0, 0);
-        }
-        // Down
-        else
-        {
-            var x = _random.Next(0, (int)squareMap.Width);
-            return new(x, 0, (int)squareMap.Height - 1);
-        }
-    }
-
-    private Vector3I GetSquareMapDefenderSpawn(SquareMap squareMap, int radius)
-    {
-        var randX = _random.Next(-radius, radius + 1);
-        var randY = _random.Next(-radius, radius + 1);
-        return new Vector3I(randX, 0, randY) + new Vector3I((int)squareMap.TargetX, 0, (int)squareMap.TargetY);
-    }
-
-    private List<Vector3I> GetSpawnPositions(SquareMap squareMap, int count, bool isAttacker)
-    {
-        HashSet<Position> positions = [];
-        int itCount = 0;
-
-        if (isAttacker)
-        {
-            while (positions.Count < count)
-            {
-                itCount++;
-                if (itCount >= 1001)
-                    throw new Exception("Reached max iteration count for generating spawn positions");
-                var pos = GetSquareMapAttackerSpawn(squareMap);
-
-                if (IsOnTarget(squareMap, pos))
-                    continue;
-
-                if (!IsInBounds(squareMap, pos))
-                    continue;
-
-                if (IsOnObject(squareMap, pos))
-                    continue;
-
-                positions.Add(new(pos.X, pos.Y, pos.Z));
-            }
-        }
-        else
-        {
-            // Make sure radius is big enough to spawn the amount of defenders
-            var maxRadius = (int)Math.Ceiling(Math.Sqrt(positions.Count)) + 2;
-
-            while (positions.Count < count)
-            {
-                itCount++;
-                if (itCount >= 1001)
-                    throw new Exception("Reached max iteration count for generating spawn positions");
-
-                var pos = GetSquareMapDefenderSpawn(squareMap, maxRadius);
-
-                if (IsOnTarget(squareMap, pos))
-                    continue;
-
-                if (!IsInBounds(squareMap, pos))
-                    continue;
-
-                if (IsOnObject(squareMap, pos))
-                    continue;
-
-                positions.Add(new(pos.X, pos.Y, pos.Z));
-            }
-        }
-
-        return [.. positions.Select(e => new Vector3I(e.X, e.Y, e.Z))];
+        return position.X >= 0 && position.Z >= 0 && position.X <= mapSpec.Width && position.Z <= mapSpec.Height;
     }
 
     public List<Vector3I> GetTargetPositions(MapSpec mapSpec)

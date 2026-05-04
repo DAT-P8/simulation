@@ -33,6 +33,8 @@ public class MapSpawner(ILogger logger, ICameraController cameraController) : IM
     private void SpawnSquareMap(SquareMap squareMap)
     {
         var sqmap = new RSquareMap((int)squareMap.Width, (int)squareMap.Height, (int)squareMap.TargetX, (int)squareMap.TargetY);
+        int topBound = sqmap.Height + 1;
+        int rightBound = sqmap.Width + 1;
 
 
         if (!_squareMaps.TryAdd(sqmap, 1))
@@ -48,16 +50,16 @@ public class MapSpawner(ILogger logger, ICameraController cameraController) : IM
                 })
                 .ToHashSet();
 
-            for (int x = -1; x <= sqmap.Width; x++)
+            for (int x = -1; x <= rightBound; x++)
             {
-                for (int y = -1; y <= sqmap.Height; y++)
+                for (int y = -1; y <= topBound; y++)
                 {
                     var position = new Position(x, y);
 
                     Node3D tile;
                     if (position == targetPos)
                         tile = _redTile.Instantiate<Node3D>();
-                    else if (x == -1 || x == sqmap.Width || y == -1 || y == sqmap.Height)
+                    else if (x == -1 || x == rightBound || y == -1 || y == topBound)
                         tile = _blueTile.Instantiate<Node3D>();
                     else if (objectPositions.Any(e => e == position))
                         tile = _greyTile.Instantiate<Node3D>();

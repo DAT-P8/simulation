@@ -75,13 +75,13 @@ public class GWSimulation(ILogger logger, IDroneSpawner droneSpawner, IMapSpawne
 
         for (int i = 0; i < defenders; i++)
         {
-            var d = _droneSpawner.SpawnDrone(i, false);
+            var d = await _droneSpawner.SpawnDroneAsync(i, false);
             defenderDrones.Add(d);
         }
 
         for (int i = defenders; i < attackers + defenders; i++)
         {
-            var a = _droneSpawner.SpawnDrone(i, true);
+            var a = await _droneSpawner.SpawnDroneAsync(i, true);
             attackerDrones.Add(a);
         }
 

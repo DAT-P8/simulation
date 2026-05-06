@@ -1,8 +1,9 @@
+using System.Threading.Tasks;
 using Simulation.Instances;
 
 namespace Simulation.Services;
 
 public interface IDroneSpawner
 {
-    GWDrone SpawnDrone(int id, bool isAttacker);
+    Task<GWDrone> SpawnDroneAsync(int id, bool isAttacker);
 }

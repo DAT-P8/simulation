@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -8,7 +9,7 @@ namespace Simulation.Services;
 
 public class MapSpawner(ILogger logger, ICameraController cameraController) : IMapSpawner
 {
-    private readonly Dictionary<RSquareMap, int> _squareMaps = [];
+    private readonly ConcurrentDictionary<RSquareMap, int> _squareMaps = [];
     private readonly ILogger _logger = logger;
     private readonly ICameraController _cameraController = cameraController;
     private readonly PackedScene _greenTile = GD.Load<PackedScene>("res://green_tile.tscn");

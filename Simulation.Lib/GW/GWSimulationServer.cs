@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Grpc.Core;
 using GW2D.V1;
 using Serilog;
@@ -6,7 +7,7 @@ namespace Simulation.Lib.GW;
 
 public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisposable
 {
-    private readonly Dictionary<long, SimulationDatetime> _simulations = [];
+    private readonly ConcurrentDictionary<long, SimulationDatetime> _simulations = [];
 
     private readonly ILogger _logger;
     private readonly IGWSimulationFactory _simulationFactory;
@@ -32,7 +33,7 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
             {
                 _logger.Warning("Cleaned up simulation {Id} due to being idle for too long!", key);
                 simDate.Simulation.Close();
-                _simulations.Remove(key);
+                _simulations.Remove(key, out _);
             }
         }
         finally
@@ -103,7 +104,7 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
         {
             id = GetNewId();
             newSim = await _simulationFactory.CreateSimulation(id);
-            _simulations.Add(id, new SimulationDatetime(newSim, DateTime.UtcNow));
+            _simulations.TryAdd(id, new SimulationDatetime(newSim, DateTime.UtcNow));
         }
         finally
         {
@@ -134,7 +135,7 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
 
             try
             {
-                _simulations.Remove(request.SimId);
+                _simulations.TryRemove(request.SimId, out _);
             }
             finally
             {
@@ -153,7 +154,7 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
     private long GetNewId()
     {
         long newId;
-        if (_simulations.Count > 0)
+        if (!_simulations.IsEmpty)
             newId = _simulations.Select((d, _) => d.Key).Max() + 1;
         else
             newId = 1;

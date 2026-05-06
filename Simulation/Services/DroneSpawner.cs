@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Godot;
 using Simulation.Instances;
 
@@ -8,17 +9,19 @@ public class DroneSpawner : IDroneSpawner
     private readonly PackedScene _droneDefenderScene = GD.Load<PackedScene>("res://gw_drone.tscn");
     private readonly PackedScene _droneAttackerScene = GD.Load<PackedScene>("res://gw_drone_evader.tscn");
 
-    public GWDrone SpawnDrone(int id, bool isAttacker)
+
+    public async Task<GWDrone> SpawnDroneAsync(int id, bool isAttacker)
     {
-        PackedScene scene;
-        if (isAttacker)
-            scene = _droneAttackerScene;
-        else
-            scene = _droneDefenderScene;
+        PackedScene scene = isAttacker ? _droneAttackerScene : _droneDefenderScene;
+        var tcs = new TaskCompletionSource<GWDrone>();
 
-        var drone = scene.Instantiate<StaticBody3D>();
-        Main.MainScene.CallDeferred(Node.MethodName.AddChild, drone);
+        Callable.From(() =>
+        {
+            var drone = scene.Instantiate<StaticBody3D>();
+            Main.MainScene.AddChild(drone);
+            tcs.SetResult(new GWDrone(drone, id, isAttacker));
+        }).CallDeferred();
 
-        return new GWDrone(drone, id, isAttacker);
+        return await tcs.Task;
     }
 }

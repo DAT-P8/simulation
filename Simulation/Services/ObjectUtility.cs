@@ -7,7 +7,7 @@ namespace Simulation.Services;
 
 public static class ObjectUtility
 {
-    public static Vector3I GetPosition(this ObjectSpec objectSpec)
+    public static Vector2I GetPosition(this ObjectSpec objectSpec)
     {
         return objectSpec.ObjectOneofCase switch
         {
@@ -17,9 +17,9 @@ public static class ObjectUtility
         };
     }
 
-    public static Vector3I GetPosition(this SquareObject objectSpec)
+    public static Vector2I GetPosition(this SquareObject objectSpec)
     {
-        return new((int)objectSpec.X, 0, (int)objectSpec.Y);
+        return new((int)objectSpec.X, (int)objectSpec.Y);
     }
 
     public static List<ObjectSpec> GetObjects(this MapSpec mapSpec)

@@ -22,4 +22,11 @@ public static class DtoMapper
             _ => throw new System.Exception($"Did not recognize action: {action}!"),
         };
     }
+
+    public static Vector2I ToVector(DroneAction droneAction)
+    {
+        var action = droneAction.Action;
+        var velocity = (int)droneAction.Velocity;
+        return ToVector(action) * velocity;
+    }
 }

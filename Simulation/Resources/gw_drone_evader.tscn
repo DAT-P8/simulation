@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://b1plehi0n3icu"]
+
+[ext_resource type="Texture2D" uid="uid://bbuqjrw74wo3l" path="res://Textures/evader-drone.png" id="1_60ar5"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_34noo"]
+size = Vector2(16, 16)
+
+[node name="StaticBody2D" type="StaticBody2D" unique_id=980355639]
+texture_filter = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=997872020]
+shape = SubResource("RectangleShape2D_34noo")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1598506508]
+rotation = 3.1415927
+texture = ExtResource("1_60ar5")

@@ -5,5 +5,5 @@ namespace Simulation.Services;
 
 public interface IDroneSpawner
 {
-    Task<GWDrone> SpawnDroneAsync(int id, bool isAttacker);
+    Task<GWDrone> SpawnDroneAsync(int id, bool isEvader);
 }

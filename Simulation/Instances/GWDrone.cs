@@ -3,9 +3,10 @@ using GW2D.V1;
 
 namespace Simulation.Instances;
 
-public class GWDrone(StaticBody3D staticBody3D, long id, bool isEvader)
+public class GWDrone(StaticBody2D staticBody2D, long id, bool isEvader)
 {
-    private readonly StaticBody3D _staticBody3D = staticBody3D;
+    private readonly Vector2 offsetVector = new(8, 8);
+    private readonly StaticBody2D _staticBody2D = staticBody2D;
     private readonly long _id = id;
     private readonly bool _isEvader = isEvader;
 
@@ -15,7 +16,7 @@ public class GWDrone(StaticBody3D staticBody3D, long id, bool isEvader)
     private int _x = 0;
     private int _y = 0;
 
-    public StaticBody3D StaticBody3D => _staticBody3D;
+    public StaticBody2D StaticBody2D => _staticBody2D;
     public bool IsEvader => _isEvader;
     public long Id => _id;
     public bool Destroyed { get; set; }
@@ -25,7 +26,9 @@ public class GWDrone(StaticBody3D staticBody3D, long id, bool isEvader)
         _x = position.X;
         _y = position.Y;
 
-        StaticBody3D.CallDeferred(Node3D.MethodName.SetPosition, new Vector3(_x, 0, _y));
+        // Offset position to fit visually
+        Vector2 godotPosition = new Vector2(_x, _y) * 16;
+        StaticBody2D.CallDeferred(Node2D.MethodName.SetPosition, godotPosition + offsetVector);
     }
 
     public Vector2I GetPosition() => new(_x, _y);
@@ -40,16 +43,5 @@ public class GWDrone(StaticBody3D staticBody3D, long id, bool isEvader)
             Destroyed = Destroyed,
             IsEvader = IsEvader
         };
-    }
-
-    public MeshInstance3D? GetMeshInstance()
-    {
-        foreach (var child in StaticBody3D.GetChildren())
-        {
-            if (child is MeshInstance3D meshInstance)
-                return meshInstance;
-        }
-
-        return null;
     }
 }

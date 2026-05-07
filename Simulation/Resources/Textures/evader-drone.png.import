@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bt4mteggiptni"
-path.s3tc="res://.godot/imported/drone.png-d0bef19cc4c411780b876263a1b7ace7.s3tc.ctex"
+uid="uid://bbuqjrw74wo3l"
+path.s3tc="res://.godot/imported/evader-drone.png-bf016913ba419846fb69022226ea07a4.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://Textures/drone.png"
-dest_files=["res://.godot/imported/drone.png-d0bef19cc4c411780b876263a1b7ace7.s3tc.ctex"]
+source_file="res://Resources/Textures/evader-drone.png"
+dest_files=["res://.godot/imported/evader-drone.png-bf016913ba419846fb69022226ea07a4.s3tc.ctex"]
 
 [params]
 

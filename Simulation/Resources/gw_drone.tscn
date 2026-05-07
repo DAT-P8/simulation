@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://b8qv5houyvdiu"]
+
+[ext_resource type="Texture2D" uid="uid://bt4mteggiptni" path="res://Textures/drone.png" id="1_vkivw"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_34noo"]
+size = Vector2(16, 16)
+
+[node name="StaticBody2D" type="StaticBody2D" unique_id=451353234]
+texture_filter = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=636379228]
+shape = SubResource("RectangleShape2D_34noo")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1821080340]
+texture = ExtResource("1_vkivw")

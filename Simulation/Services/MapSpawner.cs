@@ -4,6 +4,7 @@ using System.Linq;
 using Godot;
 using GW2D.V1;
 using Serilog;
+using Simulation.Utils;
 
 namespace Simulation.Services;
 
@@ -12,12 +13,7 @@ public class MapSpawner(ILogger logger, ICameraController cameraController) : IM
     private readonly ConcurrentDictionary<RSquareMap, int> _squareMaps = [];
     private readonly ILogger _logger = logger;
     private readonly ICameraController _cameraController = cameraController;
-    private readonly PackedScene _greenTile = GD.Load<PackedScene>("res://green_tile.tscn");
-    private readonly PackedScene _greyTile = GD.Load<PackedScene>("res://grey_tile.tscn");
-    private readonly PackedScene _redTile = GD.Load<PackedScene>("res://red_tile.tscn");
-    private readonly PackedScene _blueTile = GD.Load<PackedScene>("res://blue_tile.tscn");
-
-    private readonly List<Node3D> _tiles = [];
+    private readonly TileDrawer _tileDrawer = new();
 
     public void SpawnMap(MapSpec mapSpec)
     {
@@ -33,7 +29,12 @@ public class MapSpawner(ILogger logger, ICameraController cameraController) : IM
 
     private void SpawnSquareMap(SquareMap squareMap)
     {
-        var sqmap = new RSquareMap((int)squareMap.Width, (int)squareMap.Height, (int)squareMap.TargetX, (int)squareMap.TargetY);
+        var sqmap = new RSquareMap(
+                (int)squareMap.Width,
+                (int)squareMap.Height,
+                (int)squareMap.TargetX,
+                (int)squareMap.TargetY
+        );
 
 
         if (!_squareMaps.TryAdd(sqmap, 1))
@@ -45,7 +46,7 @@ public class MapSpawner(ILogger logger, ICameraController cameraController) : IM
             var objectPositions = squareMap.Objects.Select(e =>
                 {
                     var p = e.GetPosition();
-                    return new Position(p.X, p.Z);
+                    return new Position(p.X, p.Y);
                 })
                 .ToHashSet();
 
@@ -55,28 +56,26 @@ public class MapSpawner(ILogger logger, ICameraController cameraController) : IM
                 {
                     var position = new Position(x, y);
 
-                    Node3D tile;
+                    // Draw tiles here
                     if (position == targetPos)
-                        tile = _redTile.Instantiate<Node3D>();
+                        _tileDrawer.Draw(Tile.target, PositionToVec(position));
                     else if (x == -1 || x == sqmap.Width || y == -1 || y == sqmap.Height)
-                        tile = _blueTile.Instantiate<Node3D>();
+                        _tileDrawer.Draw(Tile.border, PositionToVec(position));
                     else if (objectPositions.Any(e => e == position))
-                        tile = _greyTile.Instantiate<Node3D>();
+                        _tileDrawer.Draw(Tile.obstacle, PositionToVec(position));
                     else
-                        tile = _greenTile.Instantiate<Node3D>();
-
-                    Main.MainScene.CallDeferred(Node.MethodName.AddChild, tile);
-                    _tiles.Add(tile);
-                    tile.CallDeferred(Node3D.MethodName.SetPosition, new Vector3I(x, -1, y));
+                        _tileDrawer.Draw(Tile.tile, PositionToVec(position));
                 }
             }
 
-            var midY = sqmap.Height / 2f;
-            var midX = sqmap.Width / 2f;
+            var midY = ((sqmap.Height * 16) + 8) / 2f;
+            var midX = ((sqmap.Width * 16) + 8) / 2f;
 
-            _cameraController.SetCameraPosition(new(midX, 20, midY));
+            _cameraController.SetCameraPosition(new(midX, midY), squareMap);
         }
     }
+
+    private static Vector2I PositionToVec(Position position) => new(position.X, position.Y);
 
     // Introduced to ensure value-based equality comparisons in dictionaries.
     private record RSquareMap(int Width, int Height, int TargetX, int TargetY);

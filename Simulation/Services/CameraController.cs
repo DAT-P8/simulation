@@ -1,33 +1,17 @@
 using Godot;
+using GW2D.V1;
+using Simulation.Utils;
 
 namespace Simulation.Services;
 
 public class CameraController : ICameraController
 {
-    private readonly Camera3D _cam;
+    private readonly Camera2D _cam = SceneObjectGetter.GetObject<Camera2D>();
 
-    public CameraController()
+    public void SetCameraPosition(Vector2 position, SquareMap squareMap)
     {
-        var children = Main.MainScene.GetChildren();
-
-        Camera3D? camera = null;
-        foreach (var c in children)
-        {
-            if (c is Camera3D cam)
-            {
-                camera = cam;
-                break;
-            }
-        }
-
-        if (camera is null)
-            throw new System.Exception("Did not find the camera of the main scene!");
-
-        _cam = camera;
-    }
-
-    public void SetCameraPosition(Vector3 position)
-    {
-        _cam.CallDeferred(Node3D.MethodName.SetPosition, position);
+        _cam.CallDeferred(Camera2D.MethodName.SetZoom, new Vector2(2f, 2f));
+        _cam.CallDeferred(Node2D.MethodName.SetPosition, position);
     }
 }
+

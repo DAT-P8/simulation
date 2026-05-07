@@ -3,16 +3,12 @@ using Godot;
 using Serilog;
 using Serilog.Events;
 using Simulation.Lib;
-using Simulation.TDF;
 using Autofac;
-using Simulation.GW;
-using Simulation.Lib.GW;
-using Simulation.Lib.TDF;
 using Simulation.Services;
 
 namespace Simulation;
 
-public partial class Main : Node3D
+public partial class Main : Node2D
 {
     public static Main MainScene { get; internal set; } = null!;
 
@@ -38,11 +34,6 @@ public partial class Main : Node3D
 
         var server = container.Resolve<Server>();
         server.StartServer();
-    }
-
-    // Called every frame. 'delta' is the elapsed time since the previous frame.
-    public override void _Process(double delta)
-    {
     }
 
     private LogEventLevel RetrieveLogLevelFromArgs()

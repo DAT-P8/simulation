@@ -6,9 +6,10 @@ namespace Simulation.Services;
 
 public interface IPositionUtility
 {
-    List<Vector3I> GetSpawnPositions(MapSpec mapSpec, int count, bool isAttacker);
-    bool IsInBounds(MapSpec mapSpec, Vector3I position);
-    bool IsOnTarget(MapSpec mapSpec, Vector3I position);
-    bool IsOnObject(MapSpec mapSpec, Vector3I position);
-    List<Vector3I> GetTargetPositions(MapSpec mapSpec);
+    List<Vector2I> GetPursuerSpawn(MapSpec mapSpec, int count);
+    List<Vector2I> GetEvaderSpawn(MapSpec mapSpec, int count);
+    bool IsInBounds(MapSpec mapSpec, Vector2I position);
+    bool IsOnTarget(MapSpec mapSpec, Vector2I position);
+    bool IsOnObject(MapSpec mapSpec, Vector2I position);
+    List<Vector2I> GetTargetPositions(MapSpec mapSpec);
 }

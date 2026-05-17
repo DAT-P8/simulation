@@ -7,6 +7,17 @@ namespace Simulation.Lib.GW;
 
 public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisposable
 {
+    // Idle threshold: any sim that hasn't received a DoStep/Reset/New in this
+    // many minutes is considered abandoned and reaped. Must be longer than
+    // the slowest-imaginable algo init on the client side — RLlib algo setup
+    // can take 2+ minutes when spawning many env runners, during which a
+    // freshly-created sim sits idle waiting to be used.
+    private static readonly TimeSpan IdleThreshold = TimeSpan.FromMinutes(10);
+
+    // How often the cleanup sweep runs. Doesn't need to be tight — the cost
+    // of a slightly-stale sim hanging around is just a bit of memory.
+    private static readonly TimeSpan CleanupInterval = TimeSpan.FromMinutes(2);
+
     private readonly ConcurrentDictionary<long, SimulationDatetime> _simulations = [];
 
     private readonly ILogger _logger;
@@ -18,12 +29,12 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
     {
         _logger = logger;
         _simulationFactory = simulationFactory;
-        _timer = new Timer(CheckCleanup, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+        _timer = new Timer(CheckCleanup, null, TimeSpan.Zero, CleanupInterval);
     }
 
     private void CheckCleanup(object? state)
     {
-        var threshold = DateTime.UtcNow - TimeSpan.FromMinutes(1);
+        var threshold = DateTime.UtcNow - IdleThreshold;
 
         _simulationSemaphore.Wait();
         try
@@ -97,13 +108,16 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
     {
         IGWSimulation newSim;
 
-        // IGWSimulation newSim = await _simulationFactory.CreateSimulation();
         long id;
         await _simulationSemaphore.WaitAsync();
         try
         {
             id = GetNewId();
             newSim = await _simulationFactory.CreateSimulation(id);
+            // Stamp the creation time so the cleanup sweep doesn't immediately
+            // age this sim out before the client gets a chance to use it.
+            // (The SimulationDatetime constructor already does this, but being
+            // explicit here makes the intent clear.)
             _simulations.TryAdd(id, new SimulationDatetime(newSim, DateTime.UtcNow));
         }
         finally
@@ -116,6 +130,8 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
             (int)request.EvaderCount,
             (int)request.PursuerCount
         );
+
+        _logger.Information("Created sim {Id}; active sim count: {Count}", id, _simulations.Count);
 
         return new NewResponse
         {
@@ -141,6 +157,11 @@ public class GWSimulationServer : SimulationService.SimulationServiceBase, IDisp
             {
                 _simulationSemaphore.Release();
             }
+            _logger.Information("Closed sim {Id}; active sim count: {Count}", request.SimId, _simulations.Count);
+        }
+        else
+        {
+            _logger.Warning("Close called on unknown sim {Id}", request.SimId);
         }
 
         return new CloseResponse { };

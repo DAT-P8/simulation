@@ -11,6 +11,23 @@ public class PositionUtility(Random random, ILogger logger) : IPositionUtility
 {
     private readonly Random _random = random;
     private readonly ILogger _logger = logger;
+    // System.Random is NOT thread-safe. The DI container injects the same
+    // Random instance into every PositionUtility (it's captured once via
+    // TypedParameter.From in ServiceConfiguration). Under high concurrency
+    // (e.g. 128 vectorized envs hammering New/Reset simultaneously),
+    // unsynchronized access corrupts the RNG's internal state, which
+    // can cause Next() to return out-of-range values or get stuck on
+    // a single value. That makes spawn-position generation loop until
+    // it hits the 1001-iteration cap and throws.
+    private readonly object _randomLock = new();
+
+    private int RandomNext(int minInclusive, int maxExclusive)
+    {
+        lock (_randomLock)
+        {
+            return _random.Next(minInclusive, maxExclusive);
+        }
+    }
 
     public List<Vector3I> GetSpawnPositions(MapSpec mapSpec, int count, bool isAttacker)
     {
@@ -56,38 +73,38 @@ public class PositionUtility(Random random, ILogger logger) : IPositionUtility
 
     private Vector3I GetSquareMapAttackerSpawn(SquareMap squareMap)
     {
-        var randQuadrant = _random.Next(0, 4);
+        var randQuadrant = RandomNext(0, 4);
 
         // Left
         if (randQuadrant <= 0)
         {
-            var y = _random.Next(0, (int)squareMap.Height);
+            var y = RandomNext(0, (int)squareMap.Height);
             return new(0, 0, y);
         }
         // Right
         else if (randQuadrant <= 1)
         {
-            var y = _random.Next(0, (int)squareMap.Height);
+            var y = RandomNext(0, (int)squareMap.Height);
             return new((int)squareMap.Width - 1, 0, y);
         }
         // Down
         else if (randQuadrant <= 2)
         {
-            var x = _random.Next(0, (int)squareMap.Width);
+            var x = RandomNext(0, (int)squareMap.Width);
             return new(x, 0, 0);
         }
         // Down
         else
         {
-            var x = _random.Next(0, (int)squareMap.Width);
+            var x = RandomNext(0, (int)squareMap.Width);
             return new(x, 0, (int)squareMap.Height - 1);
         }
     }
 
     private Vector3I GetSquareMapDefenderSpawn(SquareMap squareMap, int radius)
     {
-        var randX = _random.Next(-radius, radius + 1);
-        var randY = _random.Next(-radius, radius + 1);
+        var randX = RandomNext(-radius, radius + 1);
+        var randY = RandomNext(-radius, radius + 1);
         return new Vector3I(randX, 0, randY) + new Vector3I((int)squareMap.TargetX, 0, (int)squareMap.TargetY);
     }
 
@@ -119,8 +136,12 @@ public class PositionUtility(Random random, ILogger logger) : IPositionUtility
         }
         else
         {
-            // Make sure radius is big enough to spawn the amount of defenders
-            var maxRadius = (int)Math.Ceiling(Math.Sqrt(positions.Count)) + 2;
+            // Radius should grow with the number of defenders we need to place,
+            // not with how many we've placed so far (which is always 0 here —
+            // HashSet was just initialized). With count=2 the old code happened
+            // to work (radius defaults to 2), but it would silently break for
+            // larger pursuer counts.
+            var maxRadius = (int)Math.Ceiling(Math.Sqrt(count)) + 2;
 
             while (positions.Count < count)
             {
